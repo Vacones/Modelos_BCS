@@ -1,0 +1,4 @@
+imagen_id,vaca_id,bcs,conjunto,ruta_dataset
+ejemplo-001,vaca-demo-01,2.75,ENTRENAMIENTO,vaca-demo-01/ejemplo-001.jpg
+ejemplo-002,vaca-demo-02,3.00,VALIDACION,vaca-demo-02/ejemplo-002.jpg
+ejemplo-003,vaca-demo-03,3.25,PRUEBA,vaca-demo-03/ejemplo-003.jpg

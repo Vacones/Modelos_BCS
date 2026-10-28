@@ -1,0 +1,70 @@
+# Entornos y cachés de Python
+.venv/
+.venv-*/
+venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Archivos locales del sistema y editores
+.DS_Store
+.idea/
+.vscode/
+*.swp
+~$*
+
+# Credenciales y configuración privada
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+credentials*.json
+secrets*.json
+
+# Datos, fotografías, etiquetas y manifiestos reales
+datos/
+data/
+datasets/
+dataset_*/
+**/dataset_*/
+inventario.csv
+**/inventario.csv
+**/dataset_manifest.csv
+**/particion_por_vaca.csv
+**/excluidas.csv
+**/checksums_sha256.txt
+**/_annotations*.json
+**/annotations*.json
+*.heic
+*.heif
+*.jpg
+*.jpeg
+*.png
+*.webp
+*.tif
+*.tiff
+
+# Resultados y artefactos de entrenamiento
+resultados_sin_cajas/
+resultados/
+reportes/
+*.pt
+*.pth
+*.ckpt
+*.onnx
+ejecucion.log
+
+# Documentos y hojas de trabajo locales
+*.doc
+*.docx
+*.xls
+*.xlsx
+*.pdf
+
+# Los ejemplos públicos y no sensibles sí se versionan
+!examples/
+!examples/*.csv
+!examples/*.md
