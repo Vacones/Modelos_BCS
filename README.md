@@ -88,6 +88,8 @@ Ejecute todas las pruebas:
 python -m pytest -v
 ```
 
+Sin el dataset privado, tres pruebas de integración se omiten automáticamente. Las pruebas unitarias restantes no necesitan fotografías reales. Cuando el dataset autorizado está presente, también se verifican los conteos y las particiones completas.
+
 Compruebe el manifiesto, las imágenes y las particiones sin iniciar entrenamiento:
 
 ```bash
