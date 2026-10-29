@@ -1,5 +1,9 @@
 # Vacas Holstein: pipeline local con YOLO26 y EfficientNet-B0
 
+Para **Kaggle y regresión continua de BCS con MAE**, utiliza el notebook autónomo
+[bcs_kaggle.ipynb](bcs_kaggle.ipynb) y la [guía de Kaggle](KAGGLE.md).
+La documentación siguiente corresponde al ejemplo local de clasificación.
+
 Este proyecto utiliza la carpeta descargada del notebook de conversión: fotografías, cajas YOLO, metadatos BCS y JSON COCO originales. Incluye ETL, EDA, entrenamiento, checkpoints, evaluación y predicción sobre imágenes nuevas. No incluye los pesos entrenados ni las fotografías.
 
 **Entorno previsto:** Windows con WSL2/Ubuntu y GPU NVIDIA compatible con CUDA. Los comandos de Python se ejecutan dentro de Ubuntu, no en PowerShell. No hay interfaz web ni archivos de configuración que debas escribir a mano; las opciones se pasan desde la terminal. El YAML que necesita YOLO se genera durante el ETL.
