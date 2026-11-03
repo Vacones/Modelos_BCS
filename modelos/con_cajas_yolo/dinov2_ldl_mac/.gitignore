@@ -1,0 +1,23 @@
+# Solo código y ejemplos sintéticos
+.venv-mac/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+runs/
+datos/
+data/
+dataset*/
+referencia/
+referencias_privadas/
+entorno_instalado.txt
+ULTIMA_EJECUCION.txt
+*.keras
+*.h5
+*.hdf5
+*.pt
+*.pth
+*.npz
+*.npy
+*.log
+.env
+.env.*

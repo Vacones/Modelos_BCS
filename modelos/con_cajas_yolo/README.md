@@ -6,6 +6,15 @@ Este proyecto utiliza la carpeta descargada del notebook de conversión: fotogra
 
 **Arquitectura:** YOLO26 detecta `cow` y `ass`; un recorte de `ass` se clasifica mediante EfficientNet-B0 en TensorFlow/Keras. El entrenamiento oficial de YOLO26 usa PyTorch. Por ello hay dos entornos virtuales separados, y las etapas se ejecutan en procesos distintos para evitar mezclar sus bibliotecas CUDA. El clasificador BCS, su ajuste fino y la inferencia BCS son TensorFlow.
 
+## Alternativa para Mac Apple Silicon
+
+La implementación [DINOv2 + LDL para Mac](dinov2_ldl_mac/README.md) conserva YOLO,
+extrae dos vistas de la grupa con DINOv2 congelado mediante PyTorch/MPS y entrena
+una cabeza de distribución BCS en TensorFlow/Metal. Incluye checkpoints,
+evaluación y mapas de sensibilidad por oclusión. Sus datos, referencias de
+comparación y pesos se proporcionan externamente; no modifica el pipeline
+WSL/EfficientNet descrito a continuación.
+
 ## 1. Preparar WSL2 y comprobar la tarjeta
 
 Actualiza el controlador NVIDIA **en Windows**. No instales un controlador de pantalla Linux/NVIDIA dentro de WSL. El controlador de Windows proporciona el acceso de WSL a la GPU. No necesitas instalar manualmente todo CUDA/cuDNN: las ruedas de los entornos incluyen sus dependencias de ejecución.

@@ -9,7 +9,7 @@ Este repositorio publica únicamente código, pruebas, ejemplos ficticios y docu
 | Área | Propósito | Estado documentado |
 |---|---|---|
 | [`modelos/sin_cajas_resnet`](modelos/sin_cajas_resnet/) | Clasificación conjunta por vaca con fotografías completas y ResNet18. | Implementación inicial disponible y probada. |
-| [`modelos/con_cajas_yolo`](modelos/con_cajas_yolo/) | Modelo basado en *bounding boxes* y YOLO. Roboflow se utiliza como herramienta de etiquetado. | Espacio preparado; implementación pendiente de integración. |
+| [`modelos/con_cajas_yolo`](modelos/con_cajas_yolo/) | Modelo basado en *bounding boxes* y YOLO. Roboflow se utiliza como herramienta de etiquetado. | Pipeline WSL/EfficientNet y alternativa Mac DINOv2/LDL; consultar requisitos y validación de cada implementación. |
 | [`evaluacion/comparacion_modelos`](evaluacion/comparacion_modelos/) | Comparación reproducible de los modelos aprobados. | Etapa posterior; sin resultados comparativos aprobados. |
 
 El dataset chino se mantiene como fuente externa diferida. Su posible incorporación dependerá de los resultados de los modelos principales y no forma parte del contenido público de este repositorio.
@@ -30,6 +30,8 @@ Las reglas completas están en [`CONTRIBUTING.md`](CONTRIBUTING.md).
 ## Modelo disponible
 
 Para instalar, validar o entrenar el modelo sin cajas, consulte [`modelos/sin_cajas_resnet/README.md`](modelos/sin_cajas_resnet/README.md).
+
+Para la alternativa Mac con DINOv2 + LDL, consulte [`modelos/con_cajas_yolo/dinov2_ldl_mac/README.md`](modelos/con_cajas_yolo/dinov2_ldl_mac/README.md).
 
 ## Uso responsable
 
