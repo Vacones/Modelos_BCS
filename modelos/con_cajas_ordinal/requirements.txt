@@ -1,0 +1,12 @@
+# Motor de Keras: en Windows instala PyTorch con CUDA aparte (ver README); en Linux o Mac, instala tensorflow.
+keras>=3.15
+numpy
+pandas>=2.2
+scikit-learn
+scipy
+matplotlib
+pillow
+pyyaml
+openpyxl
+jupyter
+ipykernel
