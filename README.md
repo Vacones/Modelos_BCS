@@ -2,37 +2,42 @@
 
 Repositorio común del equipo Vacones para desarrollar y comparar modelos de estimación del **Body Condition Score (BCS)** de vacas a partir de imágenes.
 
-Este repositorio publica únicamente código, pruebas, ejemplos ficticios y documentación técnica. Los datasets, fotografías, etiquetas reales, identificadores, resultados por animal y modelos entrenados permanecen fuera de GitHub.
+Aquí se publica código, pruebas, ejemplos ficticios, documentación técnica y algunos resultados agregados. Los datasets, fotografías, etiquetas e identificadores reales, predicciones por animal y modelos entrenados no deben añadirse al repositorio.
 
 ## Organización
 
-| Área | Propósito | Estado documentado |
+| Área | Contenido | Estado |
 |---|---|---|
-| [`modelos/sin_cajas_resnet`](modelos/sin_cajas_resnet/) | Clasificación conjunta por vaca con fotografías completas y ResNet18. | Implementación inicial disponible y probada. |
-| [`modelos/con_cajas_yolo`](modelos/con_cajas_yolo/) | Modelo basado en *bounding boxes* y YOLO. Roboflow se utiliza como herramienta de etiquetado. | Pipeline WSL/EfficientNet y alternativa Mac DINOv2/LDL; consultar requisitos y validación de cada implementación. |
-| [`evaluacion/comparacion_modelos`](evaluacion/comparacion_modelos/) | Comparación reproducible de los modelos aprobados. | Etapa posterior; sin resultados comparativos aprobados. |
+| [`modelos/sin_cajas_resnet`](modelos/sin_cajas_resnet/) | ResNet18 con fotografías completas y predicción conjunta por vaca. | Baseline entrenado y evaluado; código y pruebas disponibles. |
+| [`modelos/con_cajas_yolo`](modelos/con_cajas_yolo/) | YOLO + EfficientNet y una variante YOLO + DINOv2/LDL. | Código y pruebas disponibles; cada implementación tiene su propio entorno. |
+| [`modelos/con_cajas_ordinal`](modelos/con_cajas_ordinal/) | EfficientNet-B0 + CORAL con recorte de grupa. | Código y notebooks disponibles; faltan pruebas automatizadas propias. |
+| [`modelos/con_cajas_yolo_regresion`](modelos/con_cajas_yolo_regresion/) | YOLO26n + EfficientNet-B0 para estimar BCS continuo. | Notebooks de entrenamiento v2 y evaluación disponibles; falta verificar una ejecución limpia y añadir pruebas. |
+| [`evaluacion/comparacion_modelos`](evaluacion/comparacion_modelos/) | Comparación de candidatos bajo un protocolo común. | Pendiente; no hay una comparación final aprobada. |
 
-El dataset chino se mantiene como fuente externa diferida. Su posible incorporación dependerá de los resultados de los modelos principales y no forma parte del contenido público de este repositorio.
 
 ## Flujo de colaboración
 
-1. Crear una rama para el área correspondiente:
+1. Crear una rama para el área correspondiente, por ejemplo:
    - `modelo/sin-cajas-resnet`
    - `modelo/con-cajas-yolo`
+   - `modelo/con-cajas-ordinal`
+   - `modelo/con-cajas-yolo-regresion`
    - `evaluacion/comparacion-modelos`
-2. Trabajar únicamente dentro de la carpeta del modelo o evaluación correspondiente.
-3. Ejecutar las pruebas aplicables y revisar que no se incluyan archivos privados.
+2. Trabajar dentro de la carpeta del modelo o evaluación correspondiente.
+3. Ejecutar las pruebas aplicables y revisar que no se incluyan archivos privados ni salidas guardadas en notebooks.
 4. Abrir un Pull Request para integrar los cambios en `main`.
-5. Integrar únicamente versiones revisadas y funcionales.
+5. Integrar versiones revisadas y funcionales.
 
 Las reglas completas están en [`CONTRIBUTING.md`](CONTRIBUTING.md).
 
-## Modelo disponible
+## Guías por modelo
 
-Para instalar, validar o entrenar el modelo sin cajas, consulte [`modelos/sin_cajas_resnet/README.md`](modelos/sin_cajas_resnet/README.md).
-
-Para la alternativa Mac con DINOv2 + LDL, consulte [`modelos/con_cajas_yolo/dinov2_ldl_mac/README.md`](modelos/con_cajas_yolo/dinov2_ldl_mac/README.md).
+- [Modelo sin cajas: ResNet18](modelos/sin_cajas_resnet/README.md)
+- [Modelo con cajas: YOLO + EfficientNet](modelos/con_cajas_yolo/README.md)
+- [Variante con cajas para Mac: DINOv2 + LDL](modelos/con_cajas_yolo/dinov2_ldl_mac/README.md)
+- [Modelo ordinal: EfficientNet-B0 + CORAL](modelos/con_cajas_ordinal/README.md)
+- [Modelo con cajas y regresión continua](modelos/con_cajas_yolo_regresion/README.md)
 
 ## Uso responsable
 
-Los modelos de este repositorio son prototipos académicos. Sus resultados no deben utilizarse como diagnóstico veterinario ni como única base para decisiones clínicas o productivas.
+Estos modelos son prototipos académicos. Sus resultados no deben utilizarse como diagnóstico veterinario ni como única base para decisiones clínicas o productivas.
