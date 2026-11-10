@@ -64,7 +64,18 @@ inventario.csv
 *.xlsx
 *.pdf
 
+# Artefactos privados de cualquier modelo
+*.csv
+*.keras
+*.h5
+*.hdf5
+*.npz
+*.npy
+*.zip
+runs/
+salida*/
+
 # Los ejemplos públicos y no sensibles sí se versionan
-!examples/
-!examples/*.csv
-!examples/*.md
+!**/examples/
+!**/examples/*.csv
+!**/examples/*.md

@@ -64,3 +64,17 @@ Un Pull Request debe:
 5. pasar las pruebas aplicables antes de integrarse en `main`.
 
 No se asignarán propietarios automáticos mediante `CODEOWNERS` hasta que el equipo confirme responsables y usuarios de GitHub.
+
+## Mínimo por modelo
+
+Cada carpeta de `modelos/` debe indicar en su README:
+
+- Qué predice y cuál es la unidad de evaluación: foto o vaca.
+- Qué datos privados necesita y cómo proporcionarlos fuera del repositorio.
+- Cómo preparar el entorno y ejecutar entrenamiento y evaluación.
+- Qué código, pruebas y artefactos faltan para reproducir los resultados publicados.
+- Si el conjunto de prueba ya fue consultado.
+
+Cada ejecución debe registrar el commit, la configuración, la versión o huella de los datos, las particiones, el checkpoint elegido, las métricas con sus denominadores y las abstenciones. Los ejemplos y pruebas del repositorio usarán datos ficticios. Los datos, pesos y resultados individuales permanecerán fuera de GitHub.
+
+Un notebook puede servir para ejecutar el flujo, pero su README debe distinguir claramente qué etapas contiene realmente. No se presentará una evaluación como entrenamiento reproducible si el código de entrenamiento no está disponible.
