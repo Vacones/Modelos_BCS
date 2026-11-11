@@ -53,3 +53,5 @@ Esta carpeta no debe contener datasets, fotografías, manifiestos o etiquetas re
 Se preparó un [resumen descriptivo con gráficas](RESUMEN_PRELIMINAR.md), un [inventario de evidencia](INVENTARIO.md), un [protocolo](PROTOCOLO.md) y una [lista de archivos pendientes](ARCHIVOS_PENDIENTES.md). Las cifras agregadas están en [datos_agregados_validacion.csv](datos_agregados_validacion.csv). Este corte no selecciona un modelo: faltan predicciones individuales de tres enfoques para la comparación pareada por vaca.
 
 La [preparación de las corridas nuevas](PLAN_EJECUCION.md) fija las verificaciones y las salidas privadas requeridas. Una [comprobación pareada local](COMPARACION_LOCAL.md) usa únicamente fotografías byte idénticas de ResNet18 y YOLO + regresión Mac; sus cifras son diagnósticas. `evaluador_comun.py` y `adaptadores_locales.py` realizan esa comprobación sin escribir identificadores ni predicciones individuales en Git.
+
+La [nueva corrida DINOv2/LDL en Mac](DINO_CORRIDA_01.md) ya aporta predicciones privadas de validación. Su resultado se registra separado del informe histórico y aparece en las gráficas como categoría y esperanza continua del mismo modelo.

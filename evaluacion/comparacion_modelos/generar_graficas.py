@@ -68,7 +68,7 @@ def dibujar(filas: list[dict], destino: Path) -> None:
     cobertura = [fila["clasificadas_fotos"] / fila["elegibles_fotos"] for fila in filas]
     tolerancia = [fila["aciertos_025_global"] / fila["elegibles_fotos"] for fila in filas]
 
-    fig, ax = plt.subplots(figsize=(11, 5.8))
+    fig, ax = plt.subplots(figsize=(11, max(5.8, .75 * len(filas) + 1.8)))
     ax.barh(y - .19, cobertura, height=.34, color="#287a75", label="Cobertura")
     ax.barh(y + .19, tolerancia, height=.34, color="#c47830", label="Dentro de ±0.25, global")
     for i, fila in enumerate(filas):
@@ -84,13 +84,13 @@ def dibujar(filas: list[dict], destino: Path) -> None:
     ax.legend(loc="lower right")
     ax.grid(axis="x", alpha=.2)
     fig.text(.02, .01,
-             "Cifras descriptivas; ResNet y regresión recalculados localmente, otros documentados. "
-             "La regresión usa salida continua; los demás, categórica.", fontsize=8)
+             "Cifras descriptivas: las fuentes constan en el CSV. DINO histórico y DINO Mac nuevo son corridas distintas; "
+             "categoría y continuo del nuevo DINO son salidas del mismo modelo.", fontsize=8)
     fig.tight_layout(rect=(0, .045, 1, 1))
     fig.savefig(destino / "cobertura_y_tolerancia_val.png", dpi=180)
     plt.close(fig)
 
-    fig, ax = plt.subplots(figsize=(10, 5.4))
+    fig, ax = plt.subplots(figsize=(10, max(5.4, .72 * len(filas) + 1.8)))
     for i, fila in enumerate(filas):
         mae = fila["mae_clasificadas_foto"]
         color = "#b56a25" if fila["salida"] == "continua" else "#406ca1"
