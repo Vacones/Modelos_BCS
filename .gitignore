@@ -79,3 +79,9 @@ salida*/
 !**/examples/
 !**/examples/*.csv
 !**/examples/*.md
+
+# Comparación maestra: solo agregados y figuras revisadas
+!evaluacion/comparacion_modelos/datos_agregados_validacion.csv
+!evaluacion/comparacion_modelos/figuras/
+!evaluacion/comparacion_modelos/figuras/cobertura_y_tolerancia_val.png
+!evaluacion/comparacion_modelos/figuras/mae_condicionado_val.png

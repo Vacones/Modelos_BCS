@@ -47,3 +47,7 @@ La comparación técnica alimentará una evaluación posterior frente a los crit
 ## Privacidad
 
 Esta carpeta no debe contener datasets, fotografías, manifiestos o etiquetas reales, identificadores de animales, predicciones individuales, credenciales ni checkpoints. Cualquier resumen agregado que se publique debe revisarse antes de integrarlo en GitHub.
+
+## Corte preliminar de validación
+
+Se preparó un [resumen descriptivo con gráficas](RESUMEN_PRELIMINAR.md), un [inventario de evidencia](INVENTARIO.md), un [protocolo](PROTOCOLO.md) y una [lista de archivos pendientes](ARCHIVOS_PENDIENTES.md). Las cifras agregadas están en [datos_agregados_validacion.csv](datos_agregados_validacion.csv). Este corte no selecciona un modelo: faltan predicciones individuales de tres enfoques para la comparación pareada por vaca.

@@ -1,0 +1,7 @@
+id,modelo,salida,origen_cajas,elegibles_fotos,clasificadas_fotos,aciertos_exactos_global,aciertos_025_global,aciertos_050_global,mae_clasificadas_foto,evidencia,fuente
+constante,Referencia constante 3.0,categorica,sin_cajas,36,36,5,21,32,0.347222,documentado,https://docs.google.com/document/d/1qMms6LQeQLAYyLBn95H1RIyBzHFf3j1btDGeGGLMO_w/edit
+resnet18,ResNet18 sin cajas,categorica,sin_cajas,36,36,14,31,31,0.229167,recalculado_local,privado:resultados_sin_cajas/modelo-sin-cajas-v1/predicciones_por_imagen_validation.csv
+yolo_eff,YOLO + EfficientNet,categorica,predichas,36,30,7,16,17,0.4917,documentado,https://docs.google.com/document/d/1qMms6LQeQLAYyLBn95H1RIyBzHFf3j1btDGeGGLMO_w/edit
+ordinal_v4,YOLO + CORAL ordinal v4,categorica,predichas,36,29,13,21,27,,documentado,https://docs.google.com/document/d/1Wl5ib2npN-AwFp9jeMp5FPZjZKEYmLwc5PV9oU3hLZ8/edit
+dino_ldl,YOLO + DINOv2/LDL,categorica,predichas,36,28,8,25,27,0.2143,documentado,https://docs.google.com/document/d/1Wl5ib2npN-AwFp9jeMp5FPZjZKEYmLwc5PV9oU3hLZ8/edit
+yolo_regresion,YOLO + regresión v2 Mac,continua,predichas,36,27,,8,21,0.329896,recalculado_local,privado:resultados_yolo_regresion/bcs_secuencial_v2_regresion_mac/predicciones_val.csv
