@@ -1,0 +1,13 @@
+# Python 3.12 en macOS arm64. Base usada en las pruebas locales de otros modelos.
+# TensorFlow/Metal y MPS deben comprobarse en el equipo de ejecución.
+ultralytics==8.4.0
+torch==2.15.0
+torchvision==0.29.2
+tensorflow==2.18.1
+tensorflow-metal==1.2.0
+numpy==2.0.2
+pandas==3.1.1
+matplotlib==3.11.2
+Pillow==13.0.0
+PyYAML==6.0.3
+scikit-learn==1.6.1

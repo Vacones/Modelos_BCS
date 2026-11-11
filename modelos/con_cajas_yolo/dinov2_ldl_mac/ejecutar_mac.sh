@@ -15,7 +15,13 @@ ROI_ARGS=(--roi-mode "$MODE")
 if [ -n "${ROI_CSV:-}" ]; then ROI_ARGS+=(--roi-csv "$ROI_CSV"); fi
 test -d "$DATASET" || { echo 'No existe el dataset: indica una ruta externa autorizada; consulta README.md.'; exit 2; }
 mkdir -p runs
-RUN_ROOT="$(mktemp -d "$PWD/runs/mac_$(date +%Y%m%d_%H%M%S)_XXXXXX")"
+if [ -n "${RUN_DESTINO:-}" ]; then
+  "$PY" preflight.py --datos "$DATASET" --salida "$RUN_DESTINO"
+  mkdir "$RUN_DESTINO"
+  RUN_ROOT="$(cd "$RUN_DESTINO" && pwd)"
+else
+  RUN_ROOT="$(mktemp -d "$PWD/runs/mac_$(date +%Y%m%d_%H%M%S)_XXXXXX")"
+fi
 printf '%s\n' "$RUN_ROOT" > ULTIMA_EJECUCION.txt
 exec > >(tee -a "$RUN_ROOT/ejecucion.log") 2>&1
 trap 'echo "Falló una etapa; conserva esta carpeta y consulta $RUN_ROOT/ejecucion.log. La guía explica cómo continuar."' ERR

@@ -57,6 +57,29 @@ El ETL comprueba geometría y correspondencia COCO/YOLO/metadatos; rechaza ident
 
 ## 3. Ejecutar el flujo completo
 
+Antes de entrenar con el COCO original `train/valid/test`, ejecutar esta comprobación desde esta carpeta, después de `instalar_mac.sh`:
+
+```bash
+mkdir -p "$HOME/Desktop/vacones_reg/resultados_dino"
+RUN_DESTINO="$HOME/Desktop/vacones_reg/resultados_dino/comparacion_dino_01"
+.venv-mac/bin/python preflight.py \
+  --datos "$HOME/Desktop/vacones_reg/datos/coco_cajas_v2_aprobado" \
+  --salida "$RUN_DESTINO"
+```
+
+Comprueba macOS ARM64, Python y dependencias instaladas, la presencia de las imágenes de `train` y `valid`, las clases `cow`/`ass` y que esa ruta de salida no exista. No crea la salida, no lee `test` y no entrena. Si falla por dependencias, usar `bash instalar_mac.sh` en vez de instalar paquetes sueltos en otro entorno.
+
+Para usar **esa misma ruta** en la corrida nueva, una vez aprobado el preflight:
+
+```bash
+env RUN_DESTINO="$RUN_DESTINO" caffeinate -i bash ejecutar_mac.sh \
+  "$HOME/Desktop/vacones_reg/datos/coco_cajas_v2_aprobado"
+```
+
+El ejecutor repite el preflight antes de crear `RUN_DESTINO` fuera del repositorio; si la carpeta ya existe, se detiene sin sobrescribirla. Luego comprueba GPU, prepara datos, entrena la cabeza LDL y, si no se indica un detector privado como segundo argumento, entrena un detector nuevo. El comportamiento anterior, con un directorio aleatorio en `runs/`, se conserva si no se define `RUN_DESTINO`.
+
+Al terminar, revisar `"$RUN_DESTINO/FINALIZADO.txt"`, `"$RUN_DESTINO/val_gt/resumen.md"`, `"$RUN_DESTINO/val_pipeline/resumen.md"`, `"$RUN_DESTINO/val_pipeline/metricas.json"`, `"$RUN_DESTINO/val_pipeline/predicciones.csv"` y `"$RUN_DESTINO/val_pipeline/por_vaca.csv"`. Confirmar que hay 36 fotos de validación elegibles, registrar cobertura/abstenciones y conservar el directorio completo en privado. Si falta `FINALIZADO.txt`, revisar `"$RUN_DESTINO/ejecucion.log"`; no interpretar una corrida parcial como evaluación final. El ejecutor no evalúa `test`.
+
 Sin detector privado disponible, entrena uno nuevo a partir de los pesos públicos y las cajas externas:
 
 ```bash
