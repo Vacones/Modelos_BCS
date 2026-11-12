@@ -96,6 +96,7 @@ class PreflightMacTest(unittest.TestCase):
             self.assertTrue((destino / "labels/val/foto2.txt").is_file())
             self.assertEqual((fuente / "valid/_annotations.coco.json").read_bytes(), antes)
             self.assertEqual(resumen["fotos_bcs_utilizable"]["valid"], 1)
+            self.assertFalse(resumen["solo_lectura"])
 
     def test_no_crea_salida_si_hay_fuga_entre_particiones(self):
         with tempfile.TemporaryDirectory() as temporal:

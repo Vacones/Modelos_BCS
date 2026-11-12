@@ -19,7 +19,7 @@ def preparar_entrada(fuente: Path, destino: Path) -> dict:
     resumen = inspeccionar_coco(fuente)
     from modelos.con_cajas_yolo.dinov2_ldl_mac.bcs.raw_coco import normalize
     normalize(fuente, destino)
-    return resumen
+    return {**resumen, "solo_lectura": False, "entrada_creada": True}
 
 
 def main() -> None:
