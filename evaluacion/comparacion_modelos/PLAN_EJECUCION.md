@@ -1,6 +1,6 @@
 # Plan de ejecución para la comparación maestra
 
-**Estado:** preparación técnica, 10 de noviembre de 2026. Las corridas nuevas tendrán identificadores y resultados propios; no reemplazan las métricas de los informes históricos.
+**Estado:** cinco enfoques con predicciones locales de validación, 12 de noviembre de 2026. Las corridas nuevas tienen identificadores y resultados propios; no reemplazan las métricas de los informes históricos. Quedan verificaciones de correspondencia y una prueba independiente antes de cerrar la comparación.
 
 ## Objetivo y reglas comunes
 
@@ -15,8 +15,8 @@ Antes de comparar, el evaluador común deberá comprobar unicidad de claves, una
 | ResNet18 sin cajas | Pesos y predicciones locales disponibles. | Confirmar manifiesto, huella y correspondencia con el conjunto común. | Predicciones por foto y por vaca ya existentes; adaptar solo el lector común. |
 | YOLO + regresión v2 Mac | Pesos y predicciones locales disponibles. | Conciliar dos fotografías con hash distinto frente a ResNet18. | Predicciones de `val`, configuración, resumen por vaca ya existentes. |
 | YOLO + DINOv2/LDL | **Nueva corrida `comparacion_dino_01` terminada y verificada localmente**; pesos históricos siguen ausentes. | Revisar abstenciones y agregación por vaca antes de decidir. | Checkpoint, `val_pipeline/predicciones.csv`, `por_vaca.csv`, configuración y métricas privados disponibles; `val_gt` separado. [Resumen](DINO_CORRIDA_01.md). |
-| YOLO + EfficientNet clasificador | Código WSL/CUDA; faltan pesos históricos y entrada preparada. | Adaptar carga COCO y soporte Mac, demostrar inferencia/ETL sintéticos y separación por vaca. | Corrida **nueva** en Mac; predicciones de pipeline y de cajas anotadas por separado, con abstenciones. |
-| YOLO + CORAL ordinal | Código usa export YOLO/metadata que no está localmente; faltan pesos históricos. | Adaptar COCO aprobado sin filtrar ni mover particiones; pruebas de etiquetas/cajas/identidades. | Corrida **nueva** entrenada solo con `train`; predicciones de `val` por foto y vaca, configuración y checkpoint. |
+| YOLO + EfficientNet clasificador | **Nueva corrida `resultados_yolo_eff_mac` terminada y verificada localmente**; los pesos históricos siguen ausentes. | COCO/ETL, soporte Mac y separación por vaca comprobados. | Predicciones con cajas anotadas y predichas, abstenciones y checkpoint privados disponibles. [Resumen](EFFICIENTNET_CORRIDA_01.md). |
+| YOLO + CORAL ordinal | **Nueva corrida `coral_holdout_v1` y evaluación `coral_pipeline_val_v1` terminadas y verificadas localmente**; los pesos históricos siguen ausentes. | COCO aprobado, etiquetas, cajas, identidades y checkpoint comprobados. | Predicciones por foto y vaca con cajas anotadas y predichas, abstenciones y checkpoint privados disponibles. [Resumen](ORDINAL_CORRIDA_01.md). |
 
 ## Orden de trabajo
 

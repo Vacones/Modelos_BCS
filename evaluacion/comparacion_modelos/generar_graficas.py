@@ -56,6 +56,119 @@ def cargar_agregados(ruta: Path) -> list[dict]:
     return filas
 
 
+def validar_pareados(filas: list[dict[str, str]]) -> list[dict]:
+    if len(filas) < 2 or len({r["id"] for r in filas}) != len(filas):
+        raise ValueError("Se requieren al menos dos modelos pareados distintos")
+    resultado = []
+    for fila in filas:
+        fotos, vacas = int(fila["fotos_pareadas"]), int(fila["vacas_pareadas"])
+        mae_foto = float(fila["mae_foto_categoria"])
+        mae_vaca = float(fila["mae_vaca_media_fotos"])
+        if fotos <= 0 or vacas <= 0 or vacas > fotos:
+            raise ValueError("Denominadores pareados inválidos")
+        if any(not math.isfinite(v) or v < 0 for v in (mae_foto, mae_vaca)):
+            raise ValueError("MAE pareado inválido")
+        resultado.append({**fila, "fotos_pareadas": fotos, "vacas_pareadas": vacas,
+                          "mae_foto_categoria": mae_foto,
+                          "mae_vaca_media_fotos": mae_vaca})
+    if len({(r["fotos_pareadas"], r["vacas_pareadas"]) for r in resultado}) != 1:
+        raise ValueError("Los denominadores pareados deben ser iguales")
+    return resultado
+
+
+def cargar_pareados(ruta: Path) -> list[dict]:
+    with ruta.open(newline="", encoding="utf-8") as archivo:
+        return validar_pareados(list(csv.DictReader(archivo)))
+
+
+def validar_vacas(filas: list[dict[str, str]]) -> list[dict]:
+    if not filas or len({r["id"] for r in filas}) != len(filas):
+        raise ValueError("Se requieren modelos por vaca con ID único")
+    resultado = []
+    for fila in filas:
+        total, cubiertas = int(fila["vacas_elegibles"]), int(fila["vacas_cubiertas"])
+        mae = float(fila["mae_vaca"])
+        if total <= 0 or not 0 < cubiertas <= total:
+            raise ValueError("La cobertura por vaca es imposible")
+        if not math.isfinite(mae) or mae < 0 or fila["salida"] not in {"categorica", "continua"}:
+            raise ValueError("MAE o salida por vaca inválidos")
+        if not fila["regla"]:
+            raise ValueError("Falta la regla de agregación")
+        resultado.append({**fila, "vacas_elegibles": total,
+                          "vacas_cubiertas": cubiertas, "mae_vaca": mae})
+    return resultado
+
+
+def cargar_vacas(ruta: Path) -> list[dict]:
+    with ruta.open(newline="", encoding="utf-8") as archivo:
+        return validar_vacas(list(csv.DictReader(archivo)))
+
+
+def dibujar_vacas(filas: list[dict], destino: Path) -> None:
+    import matplotlib
+    matplotlib.use("Agg")
+    import matplotlib.pyplot as plt
+    import numpy as np
+
+    y = np.arange(len(filas))
+    fig, (ax_cov, ax_mae) = plt.subplots(
+        1, 2, figsize=(12, 6), sharey=True, gridspec_kw={"width_ratios": [1, 1.1]})
+    cobertura = [r["vacas_cubiertas"] / r["vacas_elegibles"] for r in filas]
+    mae = [r["mae_vaca"] for r in filas]
+    colores = ["#406ca1" if r["salida"] == "categorica" else "#b56a25" for r in filas]
+    ax_cov.barh(y, cobertura, color="#287a75", height=.58)
+    ax_mae.barh(y, mae, color=colores, height=.58)
+    for i, fila in enumerate(filas):
+        ax_cov.text(cobertura[i] + .015, i,
+                    f"{fila['vacas_cubiertas']}/{fila['vacas_elegibles']}", va="center")
+        ax_mae.text(mae[i] + .008, i, f"{mae[i]:.3f}", va="center")
+    ax_cov.set_yticks(y, [r["modelo"] for r in filas])
+    ax_cov.set_xlim(0, 1.25)
+    ax_mae.set_xlim(0, max(mae) * 1.28)
+    ax_cov.invert_yaxis()
+    ax_cov.set_xlabel("Cobertura de vacas")
+    ax_mae.set_xlabel("MAE BCS entre vacas cubiertas")
+    ax_cov.grid(axis="x", alpha=.2)
+    ax_mae.grid(axis="x", alpha=.2)
+    fig.suptitle("Validación por vaca: cobertura y error condicionado")
+    fig.text(.02, .015,
+             "Inventario descriptivo: hay reglas de agregación, salidas y subconjuntos de fotos distintos. "
+             "Las fuentes constan en el CSV.", fontsize=9)
+    fig.tight_layout(rect=(0, .065, 1, .94))
+    fig.savefig(destino / "cobertura_y_mae_vaca_val.png", dpi=180)
+    plt.close(fig)
+
+
+def dibujar_pareados(filas: list[dict], destino: Path) -> None:
+    import matplotlib
+    matplotlib.use("Agg")
+    import matplotlib.pyplot as plt
+    import numpy as np
+
+    y = np.arange(len(filas))
+    fotos = [r["mae_foto_categoria"] for r in filas]
+    vacas = [r["mae_vaca_media_fotos"] for r in filas]
+    fig, ax = plt.subplots(figsize=(9.5, 5.2))
+    ax.barh(y - .19, fotos, height=.34, color="#406ca1", label="MAE por foto")
+    ax.barh(y + .19, vacas, height=.34, color="#287a75", label="MAE por vaca")
+    for i in range(len(filas)):
+        ax.text(fotos[i] + .006, i - .19, f"{fotos[i]:.3f}", va="center")
+        ax.text(vacas[i] + .006, i + .19, f"{vacas[i]:.3f}", va="center")
+    ax.set_yticks(y, [r["modelo"] for r in filas])
+    ax.set_xlim(0, max(fotos + vacas) * 1.25)
+    ax.invert_yaxis()
+    ax.set_xlabel("Error absoluto medio en BCS (menor es mejor)")
+    ax.set_title("Tres clasificadores sobre las mismas fotos y vacas de validación")
+    ax.legend(loc="lower right")
+    ax.grid(axis="x", alpha=.2)
+    fig.text(.02, .01,
+             f"{filas[0]['fotos_pareadas']} fotos y {filas[0]['vacas_pareadas']} vacas cubiertas por los tres; "
+             "detector compartido. Validación usada durante desarrollo.", fontsize=9)
+    fig.tight_layout(rect=(0, .07, 1, 1))
+    fig.savefig(destino / "clasificadores_pareados_val.png", dpi=180)
+    plt.close(fig)
+
+
 def dibujar(filas: list[dict], destino: Path) -> None:
     import matplotlib
     matplotlib.use("Agg")
@@ -121,8 +234,14 @@ def main() -> None:
                         default=Path(__file__).with_name("datos_agregados_validacion.csv"))
     parser.add_argument("--salida", type=Path,
                         default=Path(__file__).with_name("figuras"))
+    parser.add_argument("--pareados", type=Path,
+                        default=Path(__file__).with_name("clasificadores_pareados_validacion.csv"))
+    parser.add_argument("--vacas", type=Path,
+                        default=Path(__file__).with_name("datos_agregados_vaca_validacion.csv"))
     args = parser.parse_args()
     dibujar(cargar_agregados(args.datos), args.salida)
+    dibujar_pareados(cargar_pareados(args.pareados), args.salida)
+    dibujar_vacas(cargar_vacas(args.vacas), args.salida)
     print(f"Gráficas guardadas en {args.salida}")
 
 

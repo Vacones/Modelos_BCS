@@ -13,10 +13,10 @@ Estos insumos se revisarán **localmente**. No deben agregarse a GitHub ni a doc
 
 | Ejecución | Archivos prioritarios |
 |---|---|
-| YOLO + EfficientNet de clasificación, corrida `noche_20261028_032148_WLyisH` | CSV/JSON de predicciones de `val` del **pipeline con cajas predichas**, abstenciones y configuración de umbrales. Si hubo evaluación con cajas anotadas, conservarla separada. |
-| YOLO + CORAL ordinal **v4** | Predicciones individuales de las 36 fotos de validación del flujo automático, con abstenciones; checkpoint/configuración que distingan v4 de validación cruzada y `test`. |
+| YOLO + EfficientNet de clasificación, corrida histórica `noche_20261028_032148_WLyisH` | Sus predicciones siguen pendientes **solo si se pretende reproducir esa corrida histórica**. La nueva `resultados_yolo_eff_mac` ya generó predicciones privadas de `val`, configuración y checkpoint; véase [EFFICIENTNET_CORRIDA_01.md](EFFICIENTNET_CORRIDA_01.md). No mezclar ambas. |
+| YOLO + CORAL ordinal **v4 histórico** | Sus predicciones siguen pendientes **solo si se pretende reproducir v4**. La nueva `coral_pipeline_val_v1` ya generó predicciones privadas de `valid`, configuración y checkpoint; véase [ORDINAL_CORRIDA_01.md](ORDINAL_CORRIDA_01.md). No mezclar ambas. |
 | YOLO + DINOv2/LDL, corrida histórica `mac_20261103_112530_hGbsPu` | Sus predicciones siguen pendientes **solo si se pretende reproducir esa corrida histórica**. La nueva `comparacion_dino_01` ya generó predicciones privadas de `val`, configuración y checkpoints; véase [DINO_CORRIDA_01.md](DINO_CORRIDA_01.md). No mezclar ambas. |
 
-ResNet18, YOLO + regresión v2 Mac y la nueva corrida DINO ya tienen predicciones locales. Falta conciliar dos archivos de validación entre ResNet18 y el COCO con contenido binario distinto antes de llamar a sus resultados una comparación foto a foto idéntica.
+ResNet18, YOLO + regresión v2 Mac y las nuevas corridas DINO, EfficientNet y CORAL ya tienen predicciones locales. Falta conciliar dos archivos de validación entre ResNet18 y el COCO con contenido binario distinto antes de llamar a sus resultados una comparación foto a foto idéntica.
 
 **Entrega al análisis:** rutas locales o de una carpeta privada autorizada, no copias en el repositorio. Se puede compartir primero solo la ruta y el esquema de columnas; el equipo revisará datos e identidades antes de publicar cualquier agregado.

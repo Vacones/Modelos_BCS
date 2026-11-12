@@ -82,6 +82,11 @@ salida*/
 
 # Comparación maestra: solo agregados y figuras revisadas
 !evaluacion/comparacion_modelos/datos_agregados_validacion.csv
+!evaluacion/comparacion_modelos/datos_agregados_vaca_validacion.csv
+!evaluacion/comparacion_modelos/clasificadores_pareados_validacion.csv
 !evaluacion/comparacion_modelos/figuras/
 !evaluacion/comparacion_modelos/figuras/cobertura_y_tolerancia_val.png
 !evaluacion/comparacion_modelos/figuras/mae_condicionado_val.png
+!evaluacion/comparacion_modelos/figuras/clasificadores_pareados_val.png
+!evaluacion/comparacion_modelos/figuras/cobertura_y_mae_vaca_val.png
+!evaluacion/comparacion_modelos/figuras/matrices_confusion_pareadas_val.png

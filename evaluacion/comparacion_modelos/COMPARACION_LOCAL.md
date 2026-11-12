@@ -4,6 +4,8 @@
 
 El adaptador leyó el manifiesto privado, las predicciones por imagen de ResNet18, los metadatos COCO y las predicciones del pipeline YOLO + regresión. No guardó identificadores ni predicciones individuales en el repositorio. Las dos fuentes contienen 36 fotos de validación y 10 vacas con BCS concordantes. **34 fotos tienen el mismo hash de archivo**; las otras dos quedaron fuera de este análisis foto a foto hasta aclarar su transformación o procedencia.
 
+Revisión adicional del 12 de noviembre: cada una de las dos fotos sin hash coincidente tiene una única contraparte de la misma vaca y BCS en la otra fuente. Ambas parejas miden **768 × 1024 píxeles** y sus contenidos decodificados son muy parecidos: correlación de píxeles **0.9989** y **0.9950**; diferencia absoluta media de **0.28** y **0.94** sobre una escala de 0 a 255. Esto respalda que pueden derivar de las mismas capturas, pero no demuestra la cadena de procesamiento ni equivalencia exacta de entrada. Siguen fuera del pareo estricto de 34 fotos; no se reemplazó ni movió ningún archivo.
+
 | Métrica en las 34 fotos idénticas | ResNet18 | YOLO + regresión |
 |---|---:|---:|
 | Fotos con predicción | 34/34 | 25/34 |

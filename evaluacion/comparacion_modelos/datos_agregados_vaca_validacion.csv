@@ -1,0 +1,6 @@
+id,modelo,salida,vacas_elegibles,vacas_cubiertas,mae_vaca,regla,fuente
+resnet18,ResNet18 sin cajas,categorica,10,10,0.150000,promedio_probabilidades_y_categoria,privado:resultados_sin_cajas/modelo-sin-cajas-v1
+dino_ldl_mac_01_cat,DINOv2/LDL,categorica,10,8,0.191964,media_bcs_por_foto,privado:resultados_dino/comparacion_dino_01/val_pipeline/por_vaca.csv
+ordinal_mac_01_cat,CORAL ordinal,categorica,10,8,0.224330,media_bcs_por_foto,privado:resultados_ordinal/coral_pipeline_val_v1/metricas_val.json
+yolo_eff_mac_01,YOLO + EfficientNet,categorica,10,8,0.262277,media_bcs_por_foto,privado:resultados_yolo_eff_mac/evaluacion_pipeline_val_v1/predicciones.csv
+yolo_regresion,YOLO + regresión,continua,10,8,0.221385,media_bcs_por_foto,privado:resultados_yolo_regresion/bcs_secuencial_v2_regresion_mac/metricas_vaca_val.json

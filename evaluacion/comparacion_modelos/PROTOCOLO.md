@@ -1,6 +1,6 @@
 # Protocolo de comparación maestra BCS
 
-Estado: borrador de trabajo, 10 de noviembre de 2026. No implica selección de un modelo.
+Estado: protocolo de validación en uso, 12 de noviembre de 2026. No implica selección de un modelo ni aprobación para uso operativo.
 
 ## Candidatos
 

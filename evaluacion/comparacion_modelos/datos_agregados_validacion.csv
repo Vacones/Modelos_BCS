@@ -2,7 +2,10 @@ id,modelo,salida,origen_cajas,elegibles_fotos,clasificadas_fotos,aciertos_exacto
 constante,Referencia constante 3.0,categorica,sin_cajas,36,36,5,21,32,0.347222,documentado,https://docs.google.com/document/d/1qMms6LQeQLAYyLBn95H1RIyBzHFf3j1btDGeGGLMO_w/edit
 resnet18,ResNet18 sin cajas,categorica,sin_cajas,36,36,14,31,31,0.229167,recalculado_local,privado:resultados_sin_cajas/modelo-sin-cajas-v1/predicciones_por_imagen_validation.csv
 yolo_eff,YOLO + EfficientNet,categorica,predichas,36,30,7,16,17,0.4917,documentado,https://docs.google.com/document/d/1qMms6LQeQLAYyLBn95H1RIyBzHFf3j1btDGeGGLMO_w/edit
+yolo_eff_mac_01,YOLO + EfficientNet Mac nuevo (detector compartido),categorica,predichas,36,24,7,14,18,0.364583,recalculado_local,privado:resultados_yolo_eff_mac/evaluacion_pipeline_val_v1/metricas.json
 ordinal_v4,YOLO + CORAL ordinal v4,categorica,predichas,36,29,13,21,27,,documentado,https://docs.google.com/document/d/1Wl5ib2npN-AwFp9jeMp5FPZjZKEYmLwc5PV9oU3hLZ8/edit
+ordinal_mac_01_cat,YOLO + CORAL Mac nuevo (categoría),categorica,predichas,36,24,7,17,21,0.28125,recalculado_local,privado:resultados_ordinal/coral_pipeline_val_v1/metricas_val.json
+ordinal_mac_01_cont,La misma corrida CORAL (continuo),continua,predichas,36,24,,13,18,0.287504,recalculado_local,privado:resultados_ordinal/coral_pipeline_val_v1/metricas_val.json
 dino_ldl,YOLO + DINOv2/LDL histórico,categorica,predichas,36,28,8,25,27,0.2143,documentado,https://docs.google.com/document/d/1Wl5ib2npN-AwFp9jeMp5FPZjZKEYmLwc5PV9oU3hLZ8/edit
 dino_ldl_mac_01_cat,YOLO + DINOv2/LDL Mac nueva (categoría),categorica,predichas,36,24,8,21,23,0.208333,recalculado_local,privado:resultados_dino/comparacion_dino_01/val_pipeline/metricas.json
 dino_ldl_mac_01_cont,YOLO + DINOv2/LDL Mac nueva (continuo),continua,predichas,36,24,,18,23,0.201357,recalculado_local,privado:resultados_dino/comparacion_dino_01/val_pipeline/metricas.json
