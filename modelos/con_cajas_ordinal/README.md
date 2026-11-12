@@ -85,6 +85,23 @@ python -m modelos.con_cajas_ordinal.entrenar_coral_holdout \
 
 La carpeta de salida debe ser nueva y privada. Allí quedarán los pesos `*.weights.h5`, `predicciones_val_foto.csv`, `predicciones_val_vaca.csv`, `metricas_val.json` y `ejecucion.json` con huellas del código y COCO. No subas esos artefactos individuales a Git. Como usa cajas anotadas, este resultado mide el predictor ordinal con recortes ideales; para la comparación del sistema completo con otros modelos hará falta una evaluación adicional con cajas predichas y abstenciones.
 
+### Evaluación del sistema con cajas predichas
+
+`evaluar_pipeline.py` reconstruye el checkpoint seleccionado y usa las cajas del detector compartido con DINOv2 y YOLO + EfficientNet. Reproduce el recorte ordinal del trasero con 10% de margen y conserva cada abstención en las 36 fotos de `valid`. Comprueba la huella de los COCO del entrenamiento, el conjunto exacto de fotos y los estados del detector antes de cargar TensorFlow. No evalúa `test` ni vuelve a entrenar.
+
+Primero comprueba las entradas, desde la raíz del repositorio:
+
+```bash
+python -m modelos.con_cajas_ordinal.evaluar_pipeline \
+  --datos "$HOME/Desktop/vacones_reg/datos/coco_cajas_v2_aprobado" \
+  --entrenamiento "$HOME/Desktop/vacones_reg/resultados_ordinal/coral_holdout_v1" \
+  --cajas "$HOME/Desktop/vacones_reg/resultados_yolo_eff_mac/recortes_val_detector_compartido" \
+  --salida "$HOME/Desktop/vacones_reg/resultados_ordinal/coral_pipeline_val_v1" \
+  --solo-validar
+```
+
+Si informa 36 fotos y 24 con un par válido, ejecuta el mismo comando sin `--solo-validar`. La salida debe ser una carpeta privada nueva. Contendrá predicciones individuales, métricas con cobertura por foto y vaca, y la huella del checkpoint. El MAE sobre fotos cubiertas se presenta junto con las abstenciones; la agregación ordinal nativa por vaca y la media común de BCS por foto se reportan por separado.
+
 ### Windows con GPU NVIDIA
 
 En Windows, Keras usa PyTorch como motor, porque TensorFlow ya no usa la GPU en Windows nativo. En PowerShell, dentro de esta carpeta:
