@@ -47,3 +47,11 @@ La comparación técnica alimentará una evaluación posterior frente a los crit
 ## Privacidad
 
 Esta carpeta no debe contener datasets, fotografías, manifiestos o etiquetas reales, identificadores de animales, predicciones individuales, credenciales ni checkpoints. Cualquier resumen agregado que se publique debe revisarse antes de integrarlo en GitHub.
+
+## Corte preliminar de validación
+
+Se preparó un [resumen descriptivo con gráficas](RESUMEN_PRELIMINAR.md), un [inventario de evidencia](INVENTARIO.md), un [protocolo](PROTOCOLO.md) y una [lista de archivos pendientes](ARCHIVOS_PENDIENTES.md). Las cifras agregadas por fotografía están en [datos_agregados_validacion.csv](datos_agregados_validacion.csv) y por vaca en [datos_agregados_vaca_validacion.csv](datos_agregados_vaca_validacion.csv). También existe una [comparación pareada de tres clasificadores](clasificadores_pareados_validacion.csv) con idénticas 24 fotos y 8 vacas cubiertas. Este corte no selecciona un modelo: aún faltan conciliar dos fotos entre ResNet18 y COCO y definir una prueba independiente.
+
+La [preparación de las corridas nuevas](PLAN_EJECUCION.md) fija las verificaciones y las salidas privadas requeridas. Una [comprobación pareada local](COMPARACION_LOCAL.md) usa únicamente fotografías byte idénticas de ResNet18 y YOLO + regresión Mac; sus cifras son diagnósticas. `evaluador_comun.py` y `adaptadores_locales.py` realizan esa comprobación sin escribir identificadores ni predicciones individuales en Git.
+
+Las nuevas corridas de [DINOv2/LDL](DINO_CORRIDA_01.md), [EfficientNet de clasificación](EFFICIENTNET_CORRIDA_01.md) y [CORAL ordinal](ORDINAL_CORRIDA_01.md) ya aportan predicciones privadas de validación. Sus resultados se registran separados de los informes históricos; la categoría y la salida continua de cada una de las corridas DINO y CORAL provienen del mismo entrenamiento.

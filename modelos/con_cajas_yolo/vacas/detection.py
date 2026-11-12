@@ -3,28 +3,35 @@ from pathlib import Path
 from PIL import Image,ImageDraw
 from .common import require,save_json,load_json,crop_image,sha256
 from .data import manifest
+from .pairing import pair_boxes
 
 
-def pair_boxes(boxes, coverage=.8):
-    """Solo un par único: sin usar las cajas reales ni el BCS para escoger."""
-    cows=[b for b in boxes if b['class']==0];rumps=[b for b in boxes if b['class']==1];pairs=[]
-    for cow in cows:
-        a,b,c,d=cow['xyxy']
-        for rump in rumps:
-            x,y,z,w=rump['xyxy']; area=(z-x)*(w-y)
-            if area<=0:continue
-            intersect=max(0,min(c,z)-max(a,x))*max(0,min(d,w)-max(b,y))
-            if a<=(x+z)/2<=c and b<=(y+w)/2<=d and intersect/area>=coverage:
-                pairs.append((cow,rump))
-    if not pairs:return 'sin_par_valido',None
-    if len(pairs)>1:return 'asociacion_ambigua',None
-    return 'ok',pairs[0]
+def seleccionar_dispositivo(device, *, cuda, mps):
+    if device == 'cpu':
+        return device
+    if device == 'mps':
+        if not mps:
+            raise RuntimeError('PyTorch no detecta MPS en este equipo')
+        return device
+    if device.isdigit() or device.startswith('cuda:'):
+        if not cuda:
+            raise RuntimeError('PyTorch no detecta CUDA en este equipo')
+        return device
+    raise ValueError('Dispositivo no admitido: usa mps, cpu o un índice CUDA')
+
+
+def _comprobar_dispositivo(device, torch):
+    mps_backend = getattr(torch.backends, 'mps', None)
+    return seleccionar_dispositivo(
+        device, cuda=torch.cuda.is_available(),
+        mps=bool(mps_backend and mps_backend.is_available()),
+    )
 
 
 def get_detector(weights,device):
     import torch
     from ultralytics import YOLO
-    require(torch.cuda.is_available() or device=='cpu','PyTorch no detecta CUDA. Revisa el entorno YOLO/nvidia-smi.')
+    _comprobar_dispositivo(device, torch)
     model=YOLO(weights)
     require(model.names=={0:'cow',1:'ass'},'Pesos no adaptados a tus dos clases. Usa runs/detector/weights/best.pt, no yolo26n.pt general.')
     return model
@@ -50,7 +57,7 @@ def infer(model,path,destination,size,imgsz,conf,device):
 def train_detector(args):
     from ultralytics import YOLO
     import torch
-    require(torch.cuda.is_available() or args.device=='cpu','No hay GPU CUDA para YOLO')
+    _comprobar_dispositivo(args.device, torch)
     work,cfg,data=manifest(args.work)
     if args.resume:
         model=YOLO(args.resume)

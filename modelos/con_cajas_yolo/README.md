@@ -15,6 +15,118 @@ evaluación y mapas de sensibilidad por oclusión. Sus datos, referencias de
 comparación y pesos se proporcionan externamente; no modifica el pipeline
 WSL/EfficientNet descrito a continuación.
 
+### Preparación del clasificador YOLO + EfficientNet en Mac
+
+El COCO `coco_cajas_v2_aprobado` puede revisarse sin modificarlo antes de crear
+una nueva ejecución. Desde la raíz del repositorio:
+
+```bash
+python3 -m modelos.con_cajas_yolo.preflight_mac \
+  ~/Desktop/vacones_reg/datos/coco_cajas_v2_aprobado
+```
+
+El comando solo lee imágenes y anotaciones; imprime conteos por partición y
+huellas SHA-256 de los JSON COCO, nunca identificadores individuales. Las fotos
+con etiquetas BCS ambiguas se cuentan como no utilizables para el clasificador,
+pero siguen presentes para el detector. El número de vacas puede incluir
+identidades de esas fotos ambiguas.
+
+**Estado Mac:** el preflight está comprobado con datos sintéticos y se ejecutó
+en modo lectura sobre la versión local aprobada. El detector ahora acepta
+`--device mps` cuando PyTorch informa MPS disponible; la selección se probó
+unitariamente. No se ha hecho un entrenamiento ni una inferencia integral de
+YOLO + EfficientNet en este entorno. El instalador sigue orientado a WSL/CUDA,
+por lo que se utilizará un entorno Mac separado y se comprobarán PyTorch/MPS y
+TensorFlow/Metal antes de entrenar. Los pesos históricos del clasificador y de
+su detector no están incluidos en el repositorio: una corrida Mac será nueva.
+
+El siguiente paso para Eduardo es generar una **entrada normalizada nueva**
+desde el COCO, sin alterar el original. Desde la raíz del repositorio, con el
+entorno Mac activado:
+
+```bash
+python -m modelos.con_cajas_yolo.preparar_coco_mac \
+  --coco ~/Desktop/vacones_reg/datos/coco_cajas_v2_aprobado \
+  --solo-validar
+
+python -m modelos.con_cajas_yolo.preparar_coco_mac \
+  --coco ~/Desktop/vacones_reg/datos/coco_cajas_v2_aprobado \
+  --salida ~/Desktop/vacones_reg/datos/coco_yolo_eff_mac
+```
+
+El segundo comando crea una carpeta nueva con enlaces a imágenes, etiquetas
+YOLO, metadatos y copia de los JSON COCO. Rechaza una vaca compartida entre
+particiones **antes de crear la salida**. No lo hemos ejecutado aún sobre el
+conjunto real; solo se probó con un COCO sintético. El paso posterior será
+`pipeline.py etl` con esa carpeta como `--data`, verificando conteos y huellas.
+Se trabajará primero con `valid`; `test` no se consulta para ajustar decisiones.
+
+Para continuar en el Mac, usa Python 3.12 y un entorno nuevo; no reutilices
+los pesos ni las salidas del modelo de regresión. Los comandos siguientes se
+ejecutan desde la raíz del repositorio:
+
+```bash
+uv venv --python 3.12 .venv-yolo-eff-mac
+source .venv-yolo-eff-mac/bin/activate
+uv pip install -r modelos/con_cajas_yolo/requirements-mac.txt
+uv pip check
+python -c "import torch, tensorflow as tf; print('MPS:', torch.backends.mps.is_available()); print('Metal:', tf.config.list_physical_devices('GPU'))"
+```
+
+Solo si MPS y Metal están disponibles, preparar el manifiesto privado:
+
+```bash
+python modelos/con_cajas_yolo/pipeline.py etl \
+  --data ~/Desktop/vacones_reg/datos/coco_yolo_eff_mac \
+  --work ~/Desktop/vacones_reg/resultados_yolo_eff_mac/preparacion_v1 \
+  --size 224
+```
+
+La salida del ETL debe indicar 239 fotos BCS utilizables en `train`, 36 en
+`val` y 56 en `test`, además de conservar la separación por vaca. No es una
+autorización para consultar métricas de `test` durante el desarrollo.
+
+La secuencia de entrenamiento y validación, cuando los pasos anteriores
+pasen en el Mac, es:
+
+```bash
+python modelos/con_cajas_yolo/pipeline.py train \
+  --work ~/Desktop/vacones_reg/resultados_yolo_eff_mac/preparacion_v1 \
+  --run ~/Desktop/vacones_reg/resultados_yolo_eff_mac/cabeza_v1 \
+  --phase head --epochs 30 --batch 4 --lr 0.001
+
+python modelos/con_cajas_yolo/pipeline.py train \
+  --work ~/Desktop/vacones_reg/resultados_yolo_eff_mac/preparacion_v1 \
+  --run ~/Desktop/vacones_reg/resultados_yolo_eff_mac/ajuste_fino_v1 \
+  --phase finetune \
+  --init ~/Desktop/vacones_reg/resultados_yolo_eff_mac/cabeza_v1/best.keras \
+  --epochs 20 --batch 4 --lr 0.00001 --fine-layers 20
+
+python modelos/con_cajas_yolo/pipeline.py detector-train \
+  --work ~/Desktop/vacones_reg/resultados_yolo_eff_mac/preparacion_v1 \
+  --run ~/Desktop/vacones_reg/resultados_yolo_eff_mac/detector_v1 \
+  --weights yolo26n.pt --epochs 80 --batch 4 --imgsz 640 --device mps
+
+python modelos/con_cajas_yolo/pipeline.py detector-crops \
+  --work ~/Desktop/vacones_reg/resultados_yolo_eff_mac/preparacion_v1 \
+  --weights ~/Desktop/vacones_reg/resultados_yolo_eff_mac/detector_v1/weights/best.pt \
+  --out ~/Desktop/vacones_reg/resultados_yolo_eff_mac/recortes_val_v1 \
+  --splits val --device mps --conf 0.25
+
+python modelos/con_cajas_yolo/pipeline.py evaluate \
+  --work ~/Desktop/vacones_reg/resultados_yolo_eff_mac/preparacion_v1 \
+  --model ~/Desktop/vacones_reg/resultados_yolo_eff_mac/ajuste_fino_v1/best.keras \
+  --split val \
+  --boxes ~/Desktop/vacones_reg/resultados_yolo_eff_mac/recortes_val_v1 \
+  --out ~/Desktop/vacones_reg/resultados_yolo_eff_mac/evaluacion_val_v1
+```
+
+Se guardarán localmente `predicciones.csv`, `por_vaca.csv`, `metricas.json` y
+las figuras de evaluación. El uso de `--device mps` pasó pruebas de selección,
+pero **esta secuencia completa aún no se ha ejecutado en Mac**. Si falla alguna
+etapa, se corrige y se repite en una carpeta nueva; no se sustituyen resultados
+incompletos por cifras históricas.
+
 ## 1. Preparar WSL2 y comprobar la tarjeta
 
 Actualiza el controlador NVIDIA **en Windows**. No instales un controlador de pantalla Linux/NVIDIA dentro de WSL. El controlador de Windows proporciona el acceso de WSL a la GPU. No necesitas instalar manualmente todo CUDA/cuDNN: las ruedas de los entornos incluyen sus dependencias de ejecución.

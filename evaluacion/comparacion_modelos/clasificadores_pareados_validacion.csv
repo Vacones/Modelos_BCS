@@ -1,0 +1,4 @@
+id,modelo,fotos_pareadas,vacas_pareadas,mae_foto_categoria,mae_vaca_media_fotos,f1_macro_7_fotos_cubiertas,f1_macro_7_todas_con_abstencion
+dino_ldl_mac_01_cat,DINOv2/LDL,24,8,0.208333,0.191964,0.243084,0.213399
+ordinal_mac_01_cat,CORAL ordinal,24,8,0.281250,0.224330,0.224954,0.158883
+yolo_eff_mac_01,EfficientNet,24,8,0.364583,0.262277,0.260204,0.206349
