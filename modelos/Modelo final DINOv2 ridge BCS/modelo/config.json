@@ -1,0 +1,78 @@
+{
+ "creado": "2026-11-12",
+ "backbone": "timm vit_small_patch14_dinov2.lvd142m (DINOv2 ViT-S/14), congelado",
+ "pesos_backbone": "pesos\\dinov2_vits14.safetensors",
+ "entrada": {
+  "recorte": "caja 'ass' (grupa) dentro de la caja 'cow' de mayor confianza, margen 10%",
+  "margen": 0.1,
+  "tamano": 224,
+  "normalizacion": {
+   "mean": [
+    0.485,
+    0.456,
+    0.406
+   ],
+   "std": [
+    0.229,
+    0.224,
+    0.225
+   ]
+  },
+  "redimension": "bicubica a 224x224"
+ },
+ "features": "concat(token CLS, media de tokens de parche) = 768, promedio con la imagen espejada (flip TTA)",
+ "cabeza": {
+  "tipo": "StandardScaler + Ridge",
+  "alpha": 100.0,
+  "peso_por_foto": "1 (igual que en la CV)",
+  "entrenada_con": {
+   "fotos": 331,
+   "vacas": 66
+  }
+ },
+ "agregacion": "media de las predicciones de las fotos de la vaca",
+ "calibracion": {
+  "a": 1.2027097479272022,
+  "b": -0.6043206731825087,
+  "formula": "bcs_cal = a * media_fotos + b"
+ },
+ "redondeo": {
+  "paso": 0.25,
+  "min": 2.25,
+  "max": 3.75
+ },
+ "alerta_flaca": {
+  "umbral": 2.9,
+  "regla": "alerta si bcs_continuo calibrado <= umbral",
+  "objetivo": "BCS <= 2.75",
+  "sensibilidad_oof": 0.8038461538461539,
+  "especificidad_oof": 0.89
+ },
+ "rechazo": {
+  "conf_min_grupa": 0.25
+ },
+ "versiones": {
+  "python": "3.12.10",
+  "torch": "2.15.0+cpu",
+  "timm": "1.0.31",
+  "sklearn": "1.9.1",
+  "numpy": "2.5.4",
+  "ultralytics": "8.4.211"
+ },
+ "detector": {
+  "ruta": "detector\\best.pt",
+  "modelo": "YOLO26n (ultralytics 8.4.211), imgsz 640",
+  "entrenado_con": "Roboflow Cajas v2, split train (243 fotos), parada temprana con valid (mejor epoca 136)",
+  "clases": {
+   "0": "ass",
+   "1": "cow"
+  },
+  "conf_candidatas": 0.05,
+  "conf_min_grupa": 0.25,
+  "regla": "vaca de mayor confianza, grupa de mayor confianza con centro dentro de la vaca, si no hay vaca la grupa de mayor confianza",
+  "mAP50_valid": 0.995,
+  "mAP50_95_valid": 0.8147454797097607,
+  "mAP50_test": 0.995,
+  "mAP50_95_test": 0.7903578802727733
+ }
+}

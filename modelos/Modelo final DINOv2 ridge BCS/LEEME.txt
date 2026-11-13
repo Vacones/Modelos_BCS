@@ -1,0 +1,103 @@
+Modelo final BCS (DINOv2-S + ridge)
+Equipo Vacones, TC3009C.601, Tec de Monterrey Campus Querétaro
+12 de noviembre de 2026
+
+
+CONTENIDO
+
+Reportes del modelo (.docx)
+    Los reportes de modelado de este modelo van en esta carpeta.
+
+modelo/cabeza.joblib
+    Escalador y regresión ridge (alfa 100). Lo entrenamos con las 331 fotos
+    de las 66 vacas.
+modelo/config.json
+    Recorte, tamaño de entrada, definición de las características, alfa,
+    calibración (a = 1.2027, b = -0.6043), umbral de alerta (2.90), regla del
+    detector y versiones.
+modelo/pesos/dinov2_vits14.safetensors
+    DINOv2 ViT-S/14 de Meta en su versión de timm. Se usa congelado.
+modelo/detector/best.pt
+    Detector YOLO26n de vaca y grupa. Lo entrenamos con el split train del
+    export de Roboflow "Cajas v2" y lo detuvimos con valid.
+modelo/detector/metricas_detector.json
+    mAP del detector en valid y en test.
+modelo/HUELLAS.txt
+    SHA-256 de cada archivo de modelo/.
+
+codigo/predecir.py
+    Califica una vaca a partir de una o varias fotos traseras.
+codigo/bcs_comun.py
+    Recorte, carga de DINOv2 y cálculo de características.
+codigo/entrenar_final.py
+    Entrena la cabeza, la calibración y el umbral con todas las vacas.
+codigo/entrenar_detector.py
+    Entrena el detector con el export de Roboflow.
+codigo/evaluar_sistema.py
+    Evalúa la cadena completa con el detector.
+codigo/extraer_features.py y codigo/evaluar_cabezas.py
+    Comparación de redes base y cabezas en 66 vacas.
+codigo/comparar_b0.py, codigo/comparar_prueba_10.py y codigo/comparar_ldl.py
+    Comparaciones contra el modelo ordinal B0 y contra el DINOv2 + LDL.
+codigo/extraer_externos.py y codigo/evaluar_externos.py
+    Prueba con los datasets externos.
+codigo/figuras.py
+    Genera las figuras y el resumen del modelo final.
+codigo/requirements.txt
+    Versiones usadas.
+codigo/metadata_bcs_validos.csv
+    331 fotos de 66 vacas con su BCS y la partición por vaca (46/10/10).
+
+resultados/
+    Resultados agregados de todas las comparaciones (.json y .md) y las
+    figuras del reporte. No hay fotos, recortes ni nombres de fotos.
+
+
+RESULTADOS PRINCIPALES (POR VACA)
+
+Validación cruzada por vaca, 5 pliegues por 10 repeticiones, 66 vacas.
+Modelo final: MAE de 0.199 contra 0.318 de la constante 3.00.
+Con las cajas del detector: MAE de 0.196, y 0.206 en las 20 vacas que el
+detector no vio.
+86 % de las vacas quedan dentro de ±0.25 y 98 % dentro de ±0.50.
+Frente al modelo ordinal B0 en las mismas 56 vacas: 0.211 contra 0.250.
+Frente al DINOv2 + LDL del equipo en los mismos pliegues: 0.206 contra 0.226.
+El detalle está en los reportes.
+
+
+CÓMO USAR EL MODELO
+
+1. Crear un entorno con Python 3.12 e instalar codigo/requirements.txt.
+   Basta con la versión CPU de torch.
+2. Desde la carpeta codigo/:
+
+       python predecir.py foto1.jpg foto2.jpg foto3.jpg --vaca 1204
+
+   Todas las fotos de una llamada deben ser de la misma vaca. Recomendamos
+   3 fotos, porque así medimos el error.
+3. El resultado es un JSON con el BCS redondeado a 0.25, el valor continuo,
+   el rango de ±0.25, la alerta de vaca delgada (BCS de 2.75 o menos) y las
+   fotos rechazadas con su motivo. Una foto se rechaza si no se encuentra la
+   grupa dentro de la vaca o si la confianza de la grupa es menor que 0.25.
+4. Si ya se tienen las cajas en formato YOLO se puede saltar el detector:
+
+       python predecir.py foto1.jpg foto2.jpg --caja foto1.txt foto2.txt
+
+5. Para reentrenar con otras etiquetas o más fotos, usar
+   codigo/entrenar_final.py con la carpeta del export de Roboflow. Escribe
+   la cabeza, la calibración y el umbral en modelo/.
+
+
+AVISOS
+
+Las fotos y las etiquetas son del CAETEC. Esta carpeta es solo para el equipo
+y no se comparte con enlace público.
+
+En el export "VERIFICADO" del Drive las clases están al revés (0 = cow y
+1 = ass). El export de Roboflow que usamos tiene 0 = ass y 1 = cow. El
+detector y predecir.py leen las clases por nombre, pero las etiquetas en
+texto se leen por número. Antes de usar otras etiquetas hay que revisar
+cuál es su mapa de clases.
+
+Las 10 vacas de prueba del modelo ordinal ya se usaron en las comparaciones.
+El modelo solo vio BCS de 2.25 a 3.75. Fuera de ese rango no hay garantía.
