@@ -1,9 +1,9 @@
-"""Does Huang (ScienceDB) help the CAETEC BCS model? Evaluation ONLY on CAETEC cows,
-same protocol as evaluar_cabezas.py: repeated GroupKFold by cow (5x10), hyper-parameters
-(and optionally the Huang weight w) chosen by inner GroupKFold(3) over CAETEC training cows,
-per-cow mean of photo predictions, bootstrap CIs over cows.
+"""Prueba si las fotos de Huang (ScienceDB) ayudan al modelo de CAETEC. Solo se evalúa en vacas de CAETEC,
+con el mismo protocolo que evaluar_cabezas.py: GroupKFold por vaca repetido (5x10), hiperparámetros y,
+cuando aplica, el peso w de Huang elegidos con GroupKFold(3) interno sobre las vacas de entrenamiento,
+predicción por vaca como media de sus fotos e intervalos por bootstrap sobre vacas.
 
-Usage: python evaluar_externos.py FEATS_DIR OUT_JSON [N_REP]
+Uso: python evaluar_externos.py DIR_CARACTERISTICAS SALIDA_JSON [N_REP]
 """
 import sys, os, json, time, warnings
 import numpy as np, pandas as pd
@@ -20,16 +20,16 @@ warnings.filterwarnings("ignore")
 
 N_SPLITS, N_BOOT, PCA_DIM, BDOM = 5, 2000, 128, 10.0
 GRIDS = {"ridge": [1e-2, 1e-1, 1, 10, 100, 1e3, 1e4, 1e5], "coral": [1e-4, 1e-3, 1e-2, 1e-1, 1, 10, 100]}
-PCA_FOR = {"ridge": False, "coral": True}  # best variants of the reference run
+PCA_FOR = {"ridge": False, "coral": True}  # mejores variantes de la corrida de referencia
 
 
-# ---------------------------------------------------------------- model
+# ---------------------------------------------------------------- modelo
 def prep(Xtr, Xte, pca, dom_tr=None):
     s = StandardScaler().fit(Xtr); Xtr, Xte = s.transform(Xtr), s.transform(Xte)
     if pca:
         p = PCA(min(PCA_DIM, Xtr.shape[0] - 1), random_state=0).fit(Xtr); Xtr, Xte = p.transform(Xtr), p.transform(Xte)
         sc = Xtr.std(0).mean(); Xtr, Xte = Xtr / sc, Xte / sc
-    if dom_tr is not None:  # domain indicator (Huang=1); test rows are CAETEC -> 0
+    if dom_tr is not None:  # indicador de dominio (Huang = 1). Las filas evaluadas son de CAETEC, con 0
         Xtr = np.hstack([Xtr, BDOM * dom_tr[:, None]]); Xte = np.hstack([Xte, np.zeros((len(Xte), 1))])
     return Xtr, Xte
 
@@ -37,7 +37,7 @@ def prep(Xtr, Xte, pca, dom_tr=None):
 def fit_predict(head, hp, Xtr, ytr, Xte, w):
     if head == "ridge":
         return Ridge(alpha=hp).fit(Xtr, ytr, sample_weight=w).predict(Xte)
-    lev = np.arange(2.5, max(3.75, ytr.max()) + 1e-9, 0.25)  # CAETEC only -> 2.50..3.75 (= reference)
+    lev = np.arange(2.5, max(3.75, ytr.max()) + 1e-9, 0.25)  # solo CAETEC da 2.50 a 3.75, igual que la referencia
     K1 = len(lev) - 1; k = np.clip(np.round((np.maximum(ytr, 2.5) - 2.5) / 0.25).astype(int), 0, K1); B = 10.0
     Xe = np.vstack([np.hstack([Xtr, B * np.eye(K1)[[t] * len(Xtr)]]) for t in range(K1)])
     ye = np.concatenate([(k > t).astype(int) for t in range(K1)]); we = np.tile(w, K1)
@@ -48,7 +48,7 @@ def fit_predict(head, hp, Xtr, ytr, Xte, w):
 
 
 def train_predict(cfg, hp, w, Xc, yc, Xh, yh, dh, Xte):
-    """Train on CAETEC rows (weight 1) + Huang rows (weight w) and predict Xte (CAETEC)."""
+    """Entrena con filas de CAETEC (peso 1) y de Huang (peso w) y predice Xte, que es de CAETEC."""
     if Xh is None or w == 0:
         Xtr, ytr, wt, dom = Xc, yc, np.ones(len(yc)), None
     else:
@@ -74,13 +74,13 @@ def outer_fold(cfg, X, y, g, Xh, yh, tr, te):
                 best, oof_best = (np.mean(err), w, hp), oof
     _, w, hp = best
     pred = train_predict(cfg, hp, w, X[tr], y[tr], Xh_, yh, dh, X[te])
-    if cfg.get("calib"):  # post-hoc linear calibration fitted on inner OOF predictions (per cow)
+    if cfg.get("calib"):  # calibración lineal ajustada con las predicciones internas fuera de pliegue, por vaca
         d = pd.DataFrame({"g": g[tr], "p": oof_best, "y": y[tr]}).groupby("g").mean()
         a1, b1 = np.polyfit(d.p.values, d.y.values, 1); pred = a1 * pred + b1
     return te, pred, (w, hp)
 
 
-# ---------------------------------------------------------------- metrics
+# ---------------------------------------------------------------- métricas
 def summarize(pc, ycow, rng, ref_ae=None):
     st = EC.cow_stats(pc, ycow); n = len(ycow)
     r = {k: EC.boot(lambda i, k=k: st[k][i].mean(), n, rng) for k in ("ae", "ae_snap", "w25", "w50")}
@@ -94,7 +94,7 @@ def summarize(pc, ycow, rng, ref_ae=None):
     return r, st["ae"]
 
 
-# ---------------------------------------------------------------- transfer (f)
+# ---------------------------------------------------------------- transferencia (f)
 def choose_alpha(X, y, g):
     best = None
     for a in GRIDS["ridge"]:
@@ -136,11 +136,11 @@ def transfer(X, y, g, Xh, yh, gh, vh):
     return out
 
 
-# ---------------------------------------------------------------- main
+# ---------------------------------------------------------------- principal
 def main():
     fdir, out_json = sys.argv[1], sys.argv[2]; n_rep = int(sys.argv[3]) if len(sys.argv) > 3 else 10
     idx = pd.read_csv(os.path.join(fdir, "caetec_index.csv"), dtype={"cow_id": str})
-    g = idx.cow_id.map(lambda c: EC.ALIAS.get(c, c)).values; y = idx.bcs.values.astype(float)
+    g = idx.cow_id.values; y = idx.bcs.values.astype(float)
     X = np.load(os.path.join(fdir, "caetec_dinoS.npy"))
     hi = pd.read_csv(os.path.join(fdir, "huang_index.csv")); XH = np.load(os.path.join(fdir, "huang_dinoS.npy"))
     yh_all, gh_all, vh_all = hi.bcs.values.astype(float), hi.group.values, hi.view.values
@@ -168,7 +168,7 @@ def main():
         c = cfgs[name]; m = sel[c["ext"]] if c["ext"] else sel["all"]
         return name, r, outer_fold(c, X, y, g, XH[m] if c["ext"] else None, yh_all[m] if c["ext"] else yh_all, tr, te)
     t0 = time.time()
-    # costliest first for load balancing
+    # primero las configuraciones más costosas para repartir mejor la carga
     order = sorted(cfgs, key=lambda k: -(len(cfgs[k]["ws"]) * (5 if cfgs[k]["head"] == "coral" else 1) * (2 if cfgs[k]["ext"] else 1)))
     res = Parallel(n_jobs=-1, verbose=5)(delayed(job)(k, r, tr, te) for k in order for r, tr, te in splits)
     print(f"CV done in {time.time() - t0:.0f}s", flush=True)

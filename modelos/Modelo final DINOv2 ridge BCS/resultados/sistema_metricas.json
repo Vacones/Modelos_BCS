@@ -1,0 +1,152 @@
+{
+ "cobertura": {
+  "todas": {
+   "fotos": 331,
+   "vacas": 66,
+   "pct_fotos_utiles": 1.0,
+   "rechazos": {},
+   "iou_media": 0.9090284702433948,
+   "iou_mediana": 0.9331476483736678,
+   "pct_iou_gt_05": 1.0,
+   "pct_iou_gt_07": 0.9788519637462235,
+   "vacas_sin_foto_util": 0
+  },
+  "train (visto por el detector)": {
+   "fotos": 239,
+   "vacas": 46,
+   "pct_fotos_utiles": 1.0,
+   "rechazos": {},
+   "iou_media": 0.9328527081387389,
+   "iou_mediana": 0.9425745721832032,
+   "pct_iou_gt_05": 1.0,
+   "pct_iou_gt_07": 0.99581589958159,
+   "vacas_sin_foto_util": 0
+  },
+  "valid+test (no visto)": {
+   "fotos": 92,
+   "vacas": 20,
+   "pct_fotos_utiles": 1.0,
+   "rechazos": {},
+   "iou_media": 0.8471372435370117,
+   "iou_mediana": 0.8652037677430493,
+   "pct_iou_gt_05": 1.0,
+   "pct_iou_gt_07": 0.9347826086956522,
+   "vacas_sin_foto_util": 0
+  }
+ },
+ "sistema": {
+  "todas_66": {
+   "ann_raw": {
+    "mae": 0.2057657592224352,
+    "mae_redondeado": 0.19924242424242425,
+    "dentro_025": 0.843939393939394,
+    "dentro_050": 0.9878787878787879,
+    "cobertura_vacas": 1.0,
+    "abstenciones": 0.0,
+    "mae_ge350": 0.3649805197348962,
+    "mae_le250": 0.2380865097045898,
+    "sens_flaca_2.90": 0.7923076923076922,
+    "espec_flaca_2.90": 0.9000000000000001,
+    "n_vacas": 66
+   },
+   "ann_cal": {
+    "mae": 0.19893751412824742,
+    "mae_redondeado": 0.19053030303030302,
+    "dentro_025": 0.8681818181818182,
+    "dentro_050": 0.9833333333333334,
+    "cobertura_vacas": 1.0,
+    "abstenciones": 0.0,
+    "mae_ge350": 0.31871110249063983,
+    "mae_le250": 0.21972305384744492,
+    "sens_flaca_2.90": 0.7923076923076924,
+    "espec_flaca_2.90": 0.8950000000000001,
+    "n_vacas": 66
+   },
+   "det_raw": {
+    "mae": 0.2020330568786302,
+    "mae_redondeado": 0.19469696969696967,
+    "dentro_025": 0.8424242424242424,
+    "dentro_050": 0.9878787878787879,
+    "cobertura_vacas": 1.0,
+    "abstenciones": 0.0,
+    "mae_ge350": 0.36172933721763334,
+    "mae_le250": 0.23529008480967306,
+    "sens_flaca_2.90": 0.7538461538461538,
+    "espec_flaca_2.90": 0.8949999999999999,
+    "n_vacas": 66
+   },
+   "det_cal": {
+    "mae": 0.19605948339759655,
+    "mae_redondeado": 0.18674242424242424,
+    "dentro_025": 0.8621212121212121,
+    "dentro_050": 0.9833333333333334,
+    "cobertura_vacas": 1.0,
+    "abstenciones": 0.0,
+    "mae_ge350": 0.3164492696520827,
+    "mae_le250": 0.21293654467227782,
+    "sens_flaca_2.90": 0.7653846153846153,
+    "espec_flaca_2.90": 0.885,
+    "n_vacas": 66
+   }
+  },
+  "valid_test_20": {
+   "ann_raw": {
+    "mae": 0.21872238278388978,
+    "mae_redondeado": 0.21875,
+    "dentro_025": 0.8300000000000001,
+    "dentro_050": 0.9949999999999999,
+    "cobertura_vacas": 1.0,
+    "abstenciones": 0.0,
+    "mae_ge350": 0.4046834945678711,
+    "mae_le250": 0.2090933918952942,
+    "sens_flaca_2.90": 0.85,
+    "espec_flaca_2.90": 0.7916666666666667,
+    "n_vacas": 20
+   },
+   "ann_cal": {
+    "mae": 0.2092791892815883,
+    "mae_redondeado": 0.2,
+    "dentro_025": 0.8400000000000001,
+    "dentro_050": 0.9949999999999999,
+    "cobertura_vacas": 1.0,
+    "abstenciones": 0.0,
+    "mae_ge350": 0.36597152397695637,
+    "mae_le250": 0.18378588995354894,
+    "sens_flaca_2.90": 0.85,
+    "espec_flaca_2.90": 0.775,
+    "n_vacas": 20
+   },
+   "det_raw": {
+    "mae": 0.21759366326956525,
+    "mae_redondeado": 0.21000000000000002,
+    "dentro_025": 0.8400000000000001,
+    "dentro_050": 0.9949999999999999,
+    "cobertura_vacas": 1.0,
+    "abstenciones": 0.0,
+    "mae_ge350": 0.38696100740205674,
+    "mae_le250": 0.22650929217537247,
+    "sens_flaca_2.90": 0.8,
+    "espec_flaca_2.90": 0.775,
+    "n_vacas": 20
+   },
+   "det_cal": {
+    "mae": 0.20632317976027306,
+    "mae_redondeado": 0.19875,
+    "dentro_025": 0.86,
+    "dentro_050": 0.9949999999999999,
+    "cobertura_vacas": 1.0,
+    "abstenciones": 0.0,
+    "mae_ge350": 0.34545025462755896,
+    "mae_le250": 0.18650695534330436,
+    "sens_flaca_2.90": 0.8,
+    "espec_flaca_2.90": 0.7583333333333333,
+    "n_vacas": 20
+   }
+  }
+ },
+ "constante_3.00_mae": {
+  "todas_66": 0.3181818181818182,
+  "valid_test_20": 0.325
+ },
+ "nota": "ann = cajas anotadas (Roboflow); det = cajas del detector. raw = sin calibrar, cal = calibrado dentro del fold. Umbral alerta 2.90 se aplica a la prediccion (cal o raw segun la columna)."
+}

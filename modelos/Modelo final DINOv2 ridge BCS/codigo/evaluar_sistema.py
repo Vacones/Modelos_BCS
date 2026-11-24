@@ -1,12 +1,15 @@
-"""System-level evaluation: detector crops -> DINOv2-S -> ridge -> calibration, per cow.
+"""Evalúa el sistema completo por vaca: recorte del detector, DINOv2-S, ridge y calibración.
 
-1. Detector coverage on the 331 labeled photos and IoU of the chosen rump vs the annotated rump
-   (train split vs valid+test split, which the detector never saw).
-2. GroupKFold by cow 5x10: ridge (alpha 100) trained on ANNOTATED-box features of the training cows,
-   calibration a*pred+b fitted inside the training fold (inner GroupKFold 5 OOF per cow), held-out
-   cows predicted from DETECTOR-box features. A cow with no usable photo is an abstention.
+1. Cobertura del detector en las 331 fotos etiquetadas e IoU de la grupa elegida contra la anotada,
+   por separado en train y en valid más test, que el detector no vio.
+2. GroupKFold por vaca 5x10. El ridge (alfa 100) se entrena con las cajas anotadas de las vacas de
+   entrenamiento y la calibración a * pred + b se ajusta dentro del pliegue (GroupKFold 5 interno por vaca).
+   Las vacas evaluadas se predicen con las cajas del detector. Una vaca sin fotos útiles cuenta como abstención.
 
-Usage: python evaluar_sistema.py DATA_YOLO META_CSV PESOS_DINOV2 DETECTOR_PT OUT_JSON
+Uso: python evaluar_sistema.py DATOS_YOLO METADATA_CSV PESOS_DINOV2 DETECTOR_PT SALIDA_JSON [DIR_PREDICCIONES]
+DIR_PREDICCIONES es opcional. Si se da, guarda ahí las predicciones por vaca de cada repetición
+(final_cajas_anotadas.npz, final_sistema_detector.npz y constante.npz) para la comparación de
+evaluacion/comparacion_validacion_cruzada. Esos archivos tienen identificadores reales y no se suben.
 """
 import sys, os, json
 import numpy as np, pandas as pd, torch
@@ -21,7 +24,6 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import bcs_comun as C  # noqa: E402
 from predecir import cajas_detector  # noqa: E402
 
-ALIAS = {"2107": "1548"}
 SPLIT_DIR = {"train": "train", "val": "valid", "test": "test"}
 ALPHA, N_SPLITS, N_REP, UMBRAL, CONF_MIN = 100.0, 5, 10, 2.90, 0.25
 
@@ -56,7 +58,7 @@ def main():
             motivo = "confianza grupa < 0.25"
         else:
             motivo = "ok"
-        rows.append({"cow": ALIAS.get(r.cow_id, r.cow_id), "bcs": float(r.bcs), "split": r.split, "ann_ok": ann is not None,
+        rows.append({"cow": r.cow_id, "bcs": float(r.bcs), "split": r.split, "ann_ok": ann is not None,
                      "motivo": motivo, "conf": sel[0] if sel else np.nan, "iou": iou(sel[1], ann[1]) if (sel and ann) else np.nan,
                      "n_cow_det": n_cow, "n_ass_det": n_ass})
         crops_ann.append(C.recortar(img, ann[1]) if ann else None)
@@ -64,14 +66,14 @@ def main():
     df = pd.DataFrame(rows)
     df = df[df.ann_ok].reset_index(drop=True)
     crops_ann = [c for c in crops_ann if c is not None]
-    crops_det_k = [c for c in crops_det]  # aligned with meta rows; filter same as df
+    crops_det_k = [c for c in crops_det]  # mismo orden que meta, se filtra igual que df
     keep_mask = [r["ann_ok"] for r in rows]; crops_det_k = [c for c, k in zip(crops_det_k, keep_mask) if k]
     m = C.cargar_dinov2(pesos)
     Xa = C.features(m, crops_ann)
     ok = df.motivo.eq("ok").values
     Xd = np.full_like(Xa, np.nan); Xd[ok] = C.features(m, [c for c, o in zip(crops_det_k, ok) if o])
 
-    # ---- coverage / IoU
+    # ---- cobertura e IoU
     df["grupo"] = np.where(df.split == "train", "train (visto por el detector)", "valid+test (no visto)")
     cob = {}
     for gname, dg in [("todas", df), *df.groupby("grupo")]:
@@ -82,7 +84,7 @@ def main():
                       "pct_iou_gt_05": float((dg.iou[okg] > 0.5).mean()), "pct_iou_gt_07": float((dg.iou[okg] > 0.7).mean()),
                       "vacas_sin_foto_util": int((dg.groupby("cow").motivo.apply(lambda s: (s == "ok").sum()) == 0).sum())}
 
-    # ---- system CV
+    # ---- validación cruzada del sistema
     y = df.bcs.values; g = df.cow.values
     cows = np.unique(g); yc = pd.Series(y).groupby(g).first().reindex(cows).values
     vt = np.isin(cows, df[df.split != "train"].cow.unique())
@@ -91,7 +93,7 @@ def main():
     for r in range(N_REP):
         for tr, te in GroupKFold(N_SPLITS, shuffle=True, random_state=r).split(Xa, y, g):
             mod = nueva().fit(Xa[tr], y[tr])
-            # calibration inside the training fold
+            # calibración dentro del pliegue de entrenamiento
             oof = np.zeros(len(tr))
             for itr, ite in GroupKFold(5).split(Xa[tr], y[tr], g[tr]):
                 oof[ite] = nueva().fit(Xa[tr][itr], y[tr][itr]).predict(Xa[tr][ite])
@@ -127,6 +129,11 @@ def main():
                  "Umbral alerta 2.90 se aplica a la prediccion (cal o raw segun la columna)."}
     json.dump(R, open(out_json, "w"), indent=1, ensure_ascii=False)
     print(json.dumps(R, indent=1, ensure_ascii=False))
+    if len(sys.argv) > 6:
+        dir_pred = sys.argv[6]; os.makedirs(dir_pred, exist_ok=True)
+        np.savez(os.path.join(dir_pred, "final_cajas_anotadas.npz"), P=P["ann_cal"], ycow=yc, cows=cows)
+        np.savez(os.path.join(dir_pred, "final_sistema_detector.npz"), P=P["det_cal"], ycow=yc, cows=cows)
+        np.savez(os.path.join(dir_pred, "constante.npz"), P=np.full_like(P["ann_cal"], 3.0), ycow=yc, cows=cows)
 
 
 if __name__ == "__main__":

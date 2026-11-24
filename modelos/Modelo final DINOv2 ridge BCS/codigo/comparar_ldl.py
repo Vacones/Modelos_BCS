@@ -1,20 +1,25 @@
-"""CHECK 1: our final recipe vs the team's "DINOv2 + LDL" head, same folds, same cows.
+"""Compara la receta final con la cabeza "DINOv2 + LDL" del equipo, con los mismos pliegues y las mismas vacas.
 
-Configs (all GroupKFold by cow 5x10, identical splits, annotated rump boxes, per-cow metrics):
-  a  ours: 1 view (rump +10% margin, square resize, flip TTA), ridge alpha 100
-  b  ridge on the team's 2-view features (1536), alpha by inner grouped 3-fold CV
-  c  team LDL MLP head on the team's 2-view features, 3 seeds
-  d  team LDL MLP head on our 1-view features, 3 seeds
-  e  ridge alpha 100 on the team's full-crop view only (768), isolates crop/preprocessing
-Team recipe (repo Vacones/Modelos_BCS, modelos/con_cajas_yolo/dinov2_ldl_mac): exact rump box, no margin,
-letterbox (ImageOps.pad, bilinear) to 224; second view = top 65% of that 224 image padded to 224 (DEFAULT_ROI);
-CLS + mean patch token (final norm) per view; standardize with train mean/std; LayerNorm-Dense128-GELU-
-Dropout0.3-Dense(7); loss CE with Gaussian soft labels (sigma .125) + 0.5 * mean squared CDF difference;
-sample weight 1/photos per cow (normalized to mean 1); AdamW lr 1e-3 wd 1e-4, batch 32, <=100 epochs,
-patience 15; prediction = expected value. Their checkpoint was chosen on validation cows, so here the
-epoch is chosen honestly: 20% of the TRAINING cows (grouped) are held out for early stopping on per-cow MAE.
+Variantes (todas con GroupKFold por vaca 5x10, mismos repartos, cajas de grupa anotadas y métricas por vaca):
+  a  la receta final: 1 vista (grupa con 10 % de margen, redimensión cuadrada, foto espejada), ridge alfa 100
+  b  ridge sobre las 2 vistas del equipo (1536 valores), alfa elegido con CV interna agrupada de 3 pliegues
+  c  cabeza LDL del equipo sobre sus 2 vistas, 3 semillas
+  d  cabeza LDL del equipo sobre nuestra vista, 3 semillas
+  e  ridge alfa 100 solo con la vista completa del equipo (768 valores), para aislar el efecto del recorte
+Receta del equipo (repositorio Vacones/Modelos_BCS, modelos/con_cajas_yolo/dinov2_ldl_mac): caja exacta de la
+grupa sin margen y letterbox a 224 (ImageOps.pad, bilineal). La segunda vista es el 65 % superior de esa imagen
+llevado a 224 (DEFAULT_ROI). Por vista se toma el token CLS y la media de los parches tras la norma final. Se
+estandariza con la media y la desviación de entrenamiento. Cabeza LayerNorm, Dense 128, GELU, Dropout 0.3 y
+Dense 7. Pérdida de entropía cruzada con etiquetas gaussianas (sigma 0.125) más 0.5 por la diferencia cuadrática
+media de las CDF. Peso por foto 1 / fotos de la vaca, normalizado a media 1. AdamW con lr 1e-3 y wd 1e-4, lote 32,
+hasta 100 épocas y paciencia 15. La predicción es el valor esperado. El equipo elegía el checkpoint con las vacas
+de validación. Aquí la época se elige con el 20 % de las vacas de entrenamiento, separadas por vaca, con el MAE
+por vaca como criterio de parada.
 
-Usage: python comparar_ldl.py DATA_YOLO META PESOS OUT_JSON
+Uso: python comparar_ldl.py DATOS_YOLO METADATA PESOS SALIDA_JSON [DIR_PREDICCIONES]
+DIR_PREDICCIONES es opcional. Si se da, guarda ahí dinov2_ldl.npz con la predicción por vaca de la variante c
+para la comparación de evaluacion/comparacion_validacion_cruzada. Ese archivo tiene identificadores reales y
+no se sube.
 """
 import sys, os, json, time, math
 import numpy as np, pandas as pd, torch, torch.nn as nn
@@ -29,13 +34,13 @@ sys.path.insert(0, AQUI)
 import bcs_comun as C  # noqa: E402
 import evaluar_cabezas as EC  # noqa: E402
 
-ALIAS = {"2107": "1548"}; SPLIT = {"train": "train", "val": "valid", "test": "test"}
+SPLIT = {"train": "train", "val": "valid", "test": "test"}
 CLASSES = np.array([2.25, 2.5, 2.75, 3.0, 3.25, 3.5, 3.75], np.float32)
 N_SPLITS, N_REP, SEEDS = 5, 10, (0, 1, 2)
 ROI = (0.0, 0.0, 1.0, 0.65)
 
 
-# ------------------------------------------------------------------ team features
+# ------------------------------------------------------------------ características del equipo
 def team_crop(img, b):
     W, H = img.size; cx, cy, w, h = b
     x1, y1, x2, y2 = (cx - w / 2) * W, (cy - h / 2) * H, (cx + w / 2) * W, (cy + h / 2) * H
@@ -61,7 +66,7 @@ def feats_no_flip(model, ims, bs=16):
     return np.concatenate(out)
 
 
-# ------------------------------------------------------------------ LDL head (PyTorch port of tf_model.py)
+# ------------------------------------------------------------------ cabeza LDL (versión en PyTorch de tf_model.py)
 class Head(nn.Module):
     def __init__(self, dim):
         super().__init__()
@@ -87,7 +92,7 @@ def expected(model, X):
 
 
 def train_ldl(Xtr, ytr, gtr, seed, max_epochs=100, patience=15, lr=1e-3, wd=1e-4, batch=32):
-    """Early stopping on per-cow MAE of 20% held-out TRAINING cows; returns predictor fn."""
+    """Parada temprana con el MAE por vaca del 20 % de las vacas de entrenamiento. Devuelve la función que predice."""
     gss = GroupShuffleSplit(n_splits=1, test_size=0.2, random_state=seed)
     itr, iva = next(gss.split(Xtr, ytr, gtr))
     mu = Xtr[itr].mean(0); sd = np.maximum(Xtr[itr].std(0), 1e-6)
@@ -116,7 +121,7 @@ def train_ldl(Xtr, ytr, gtr, seed, max_epochs=100, patience=15, lr=1e-3, wd=1e-4
     return (lambda X: expected(m, ((X - mu) / sd).astype(np.float32))), best_ep
 
 
-# ------------------------------------------------------------------ ridge helpers
+# ------------------------------------------------------------------ funciones de ridge
 def ridge_fixed(Xtr, ytr, Xte, alpha=100.0):
     return make_pipeline(StandardScaler(), Ridge(alpha=alpha)).fit(Xtr, ytr).predict(Xte)
 
@@ -159,7 +164,7 @@ def main():
     Xf = feats_no_flip(m, full).astype(np.float32); Xr = feats_no_flip(m, roi).astype(np.float32)
     X2 = np.hstack([Xf, Xr])
     print(f"features {time.time() - t0:.0f}s  X1{X1.shape} X2{X2.shape}", flush=True)
-    y = meta.bcs.values.astype(np.float32); g = meta.cow_id.map(lambda c: ALIAS.get(c, c)).values
+    y = meta.bcs.values.astype(np.float32); g = meta.cow_id.values
     cows = np.unique(g); ycow = pd.Series(y).groupby(g).first().reindex(cows).values
 
     keys = ["a_ours_1view_ridge100", "b_ridge_2view_cv", "e_ridge100_teamfull_1view"] + \
@@ -175,7 +180,7 @@ def main():
                 f, ep = train_ldl(X2[tr], y[tr], g[tr], seed=1000 * r + s); P[f"c_ldl_2view_s{s}"][r, te] = f(X2[te]); info["epochs_c"].append(ep)
                 f, ep = train_ldl(X1[tr], y[tr], g[tr], seed=1000 * r + s); P[f"d_ldl_1view_s{s}"][r, te] = f(X1[te]); info["epochs_d"].append(ep)
         print(f"rep {r + 1}/{N_REP} {time.time() - t0:.0f}s", flush=True)
-    # seed-averaged LDL predictions (mean over 3 seeds) as the main c / d entries
+    # las variantes c y d principales son la media de las 3 semillas
     P["c_ldl_2view_media3"] = np.mean([P[f"c_ldl_2view_s{s}"] for s in SEEDS], 0)
     P["d_ldl_1view_media3"] = np.mean([P[f"d_ldl_1view_s{s}"] for s in SEEDS], 0)
 
@@ -200,6 +205,9 @@ def main():
         print(f"{k:28s} {f3(c['ae']):>20s} {c['w25'][0]:6.3f} {c['w50'][0]:6.3f} {c['slope'][0]:6.3f} {c['auc_le275'][0]:6.3f} "
               f"{c['mae_ge350']:6.3f} {c['mae_le250']:6.3f} {f3(c['delta_vs_a']) if 'delta_vs_a' in c else '':>22s}")
     print(json.dumps({k: R[k] for k in R if k.startswith(("spread", "alpha", "epocas", "segundos"))}, indent=1, default=float))
+    if len(sys.argv) > 5:
+        dir_pred = sys.argv[5]; os.makedirs(dir_pred, exist_ok=True)
+        np.savez(os.path.join(dir_pred, "dinov2_ldl.npz"), P=PC["c_ldl_2view_media3"], ycow=ycow, cows=cows)
 
 
 if __name__ == "__main__":

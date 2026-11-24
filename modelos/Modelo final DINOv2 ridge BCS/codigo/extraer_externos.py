@@ -1,8 +1,8 @@
-"""Sample Huang (ScienceDB) images, crop the annotated box (+10% margin) and extract
-DINOv2-S features exactly as extraer_features.py; also re-extract CAETEC DINOv2-S.
+"""Toma una muestra de fotos de Huang (ScienceDB), recorta la caja anotada con 10 % de margen y extrae
+características de DINOv2-S igual que extraer_features.py. También vuelve a extraer las de CAETEC.
 
-Usage: python extraer_externos.py HUANG_DIR CAETEC_YOLO_DIR META_CSV WEIGHTS OUT_DIR
-Outputs (OUT_DIR, delete after use: derived from private / unlicensed photos):
+Uso: python extraer_externos.py DIR_HUANG DIR_YOLO_CAETEC METADATA_CSV PESOS DIR_SALIDA
+Salidas en DIR_SALIDA, que se borra después de usarla porque viene de fotos privadas o sin licencia confirmada:
   huang_index.csv, huang_dinoS.npy, caetec_index.csv, caetec_dinoS.npy, info.json
 """
 import sys, os, re, glob, time, json, hashlib, random
@@ -15,18 +15,18 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from extraer_features import leer_cajas, recortar, a_tensor, cargar_pesos, feats, SPLIT_DIR  # noqa: E402
 
 IMN = ((0.485, 0.456, 0.406), (0.229, 0.224, 0.225))
-PER_VIEW_CLASS = 150   # target images per (view, BCS level)
-PER_ID = 2             # max images per identifiable cow / L-R index
+PER_VIEW_CLASS = 150   # fotos buscadas por vista y nivel de BCS
+PER_ID = 2             # máximo de fotos por vaca identificable o por índice L-R
 LEVELS = ["3.25", "3.5", "3.75", "4.0", "4.25"]
 
 
 def view_and_group(stem, lev):
     m = re.match(r"(GS|YM)_(\d+)_(\d+)$", stem)
-    if m:  # id can recur in another class (re-scored cow or reused id): keep (id, class) as group,
-        # but tie groups across classes by id so CV never splits the same id
+    if m:  # un id puede repetirse en otra clase (vaca recalificada o id reutilizado). El grupo es el id,
+        # así la validación cruzada nunca separa el mismo id
         return m.group(1), f"{m.group(1)}_{m.group(2)}"
     m = re.match(r"([LR])-i(\d+)$", stem)
-    if m:  # L-i<n> and R-i<n> share the index -> probably same cow/pass
+    if m:  # L-i<n> y R-i<n> comparten índice, probablemente es la misma vaca o el mismo paso
         return m.group(1) + "-i", f"LR_{m.group(2)}"
     return None, None
 
@@ -45,7 +45,7 @@ def caja_huang(xml_path):
 
 def muestrear_huang(root, seed=0):
     rng = random.Random(seed)
-    pool = defaultdict(lambda: defaultdict(list))  # (view, lev) -> group -> [paths]
+    pool = defaultdict(lambda: defaultdict(list))  # (vista, nivel) a grupo a lista de rutas
     for lev in LEVELS:
         for p in glob.glob(os.path.join(root, lev, "*.jpg")):
             v, g = view_and_group(os.path.splitext(os.path.basename(p))[0], lev)
@@ -54,7 +54,7 @@ def muestrear_huang(root, seed=0):
     rows = []
     for (v, lev), groups in sorted(pool.items()):
         gs = sorted(groups); rng.shuffle(gs); take = []
-        for g in gs:  # round 1: one per group; round 2: second image per group
+        for g in gs:  # primera vuelta, una foto por grupo. La segunda vuelta agrega otra foto por grupo
             take.append((g, rng.choice(groups[g])))
             if len(take) >= PER_VIEW_CLASS:
                 break
@@ -84,7 +84,7 @@ def main():
     os.makedirs(out, exist_ok=True); torch.set_num_threads(os.cpu_count())
     model = cargar_pesos(timm.create_model("vit_small_patch14_dinov2", pretrained=False, num_classes=0, img_size=224), w).eval()
     info = {}
-    # --- CAETEC (same rule as extraer_features.py) ---
+    # --- CAETEC, con la misma regla que extraer_features.py ---
     meta = pd.read_csv(meta_csv); meta = meta[meta.metadata_status == "ok"].reset_index(drop=True)
     crops, keep = [], []
     for i, r in meta.iterrows():

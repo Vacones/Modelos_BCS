@@ -1,0 +1,9 @@
+{
+ "descripcion": "Mismas 10 vacas de prueba del modelo EfficientNet-B0 + CORAL. DINOv2-S + ridge entrenado con las 56 vacas de entrenamiento y validacion (alfa elegido por CV por vaca = 100, calibracion a = 1.128, b = -0.399). Script: codigo/comparar_prueba_10.py",
+ "n_vacas": 10,
+ "aviso": "Estas 10 vacas tambien entraron en la validacion cruzada de 66 vacas con la que se eligio DINOv2, asi que la comparacion es indicativa.",
+ "dinov2_ridge": {"mae": 0.175, "dentro_025": 0.90, "dentro_050": 1.00, "rango_predicho": [2.50, 3.50]},
+ "dinov2_ridge_calibrado": {"mae": 0.175, "dentro_025": 0.90, "dentro_050": 1.00, "rango_predicho": [2.50, 3.50]},
+ "b0_coral_anterior": {"mae": 0.300, "dentro_025": 0.80, "dentro_050": 0.90, "rango_predicho": [2.75, 3.25]},
+ "constante_3.00": {"mae": 0.325}
+}

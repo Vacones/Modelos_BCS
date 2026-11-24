@@ -1,12 +1,12 @@
-﻿"""Train the rump/cow detector (YOLO26n) on the Roboflow 'Vacones BCS - Cajas v2 Aprobado' export:
-train split only, early stopping on valid, then mAP on valid and test.
+"""Entrena el detector de vaca y grupa (YOLO26n) con el export de Roboflow 'Vacones BCS - Cajas v2 Aprobado'.
+Usa solo el split train, la parada temprana se decide con valid y al final mide el mAP en valid y en test.
 
-Usage: python entrenar_detector.py DATA_YOLO [base_weights]
-  DATA_YOLO: folder of the Roboflow YOLO export (train/valid/test with images/ and labels/,
-             classes in the export: 0 = ass, 1 = cow)
-  base_weights: yolo26n.pt by default (Ultralytics downloads it), falls back to yolo11n.pt
-Writes the run to .\\runs and copies best.pt + metricas_detector.json to ..\\modelo\\detector.
-Needs ultralytics and, to train in reasonable time, a CUDA build of torch (see requirements.txt).
+Uso: python entrenar_detector.py DATOS_YOLO [pesos_base]
+  DATOS_YOLO: carpeta del export YOLO de Roboflow (train, valid y test con images/ y labels/,
+              clases del export: 0 = ass, 1 = cow)
+  pesos_base: yolo26n.pt por defecto (Ultralytics lo descarga). Si falla, usa yolo11n.pt
+Guarda la corrida en ./runs y copia best.pt y metricas_detector.json a ../modelo/detector.
+Necesita ultralytics y, para entrenar en un tiempo razonable, torch con CUDA (ver requirements.txt).
 """
 import os, sys, json, shutil, tempfile
 from ultralytics import YOLO
@@ -17,7 +17,7 @@ AQUI = os.path.dirname(os.path.abspath(__file__))
 
 
 def _no_cache(prefix, path, x, version):
-    x["version"] = version  # keep the in-memory contract, never write labels.cache into the dataset folder
+    x["version"] = version  # no se escribe labels.cache dentro de la carpeta del dataset
 
 
 _ds.save_dataset_cache_file = _no_cache

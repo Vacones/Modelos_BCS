@@ -1,0 +1,6 @@
+split,image_id,file_name,cow_id,bcs,metadata_status
+train,1,foto_0001.jpg,V01,3.00,ok
+train,2,foto_0002.jpg,V01,3.00,ok
+train,3,foto_0003.jpg,V02,2.75,ok
+val,4,foto_0004.jpg,V03,3.25,ok
+test,5,foto_0005.jpg,V04,3.50,ok

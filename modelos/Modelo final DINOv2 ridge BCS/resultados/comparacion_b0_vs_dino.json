@@ -1,0 +1,588 @@
+{
+ "n_vacas": 56,
+ "constante_3.00": [
+  0.317,
+  0.254,
+  0.379
+ ],
+ "dino_raw_cont": [
+  0.225,
+  0.185,
+  0.267
+ ],
+ "dino_cal_cont": [
+  0.225,
+  0.186,
+  0.266
+ ],
+ "dino_raw_snap": [
+  0.213,
+  0.171,
+  0.258
+ ],
+ "dino_cal_snap": [
+  0.211,
+  0.167,
+  0.256
+ ],
+ "B|recorte|coral|pliegues5_lr2-0.0001_margen0.1_batch16_e": {
+  "mae_snap": [
+   0.254,
+   0.205,
+   0.308
+  ],
+  "mae_cont": [
+   0.257,
+   0.211,
+   0.306
+  ],
+  "n": 56,
+  "delta_dino_cal_snap_menos_viejo_snap": [
+   -0.044,
+   -0.092,
+   0.003
+  ],
+  "delta_dino_raw_cont_menos_viejo_cont": [
+   -0.032,
+   -0.069,
+   0.003
+  ],
+  "vacas_dino_mejor_igual_peor": [
+   29,
+   5,
+   22
+  ]
+ },
+ "B|recorte|corn|pliegues5_lr2-0.0001_margen0.1_batch16_e": {
+  "mae_snap": [
+   0.254,
+   0.192,
+   0.321
+  ],
+  "mae_cont": [
+   0.261,
+   0.213,
+   0.312
+  ],
+  "n": 56,
+  "delta_dino_cal_snap_menos_viejo_snap": [
+   -0.044,
+   -0.106,
+   0.023
+  ],
+  "delta_dino_raw_cont_menos_viejo_cont": [
+   -0.036,
+   -0.078,
+   0.004
+  ],
+  "vacas_dino_mejor_igual_peor": [
+   25,
+   8,
+   23
+  ]
+ },
+ "B|recorte|regresion|pliegues5_lr2-0.0001_margen0.1_batch16_e": {
+  "mae_snap": [
+   0.281,
+   0.228,
+   0.339
+  ],
+  "mae_cont": [
+   0.279,
+   0.229,
+   0.331
+  ],
+  "n": 56,
+  "delta_dino_cal_snap_menos_viejo_snap": [
+   -0.071,
+   -0.125,
+   -0.016
+  ],
+  "delta_dino_raw_cont_menos_viejo_cont": [
+   -0.054,
+   -0.094,
+   -0.016
+  ],
+  "vacas_dino_mejor_igual_peor": [
+   28,
+   8,
+   20
+  ]
+ },
+ "B|recorte|softmax|pliegues5_lr2-0.0001_margen0.1_batch16_e": {
+  "mae_snap": [
+   0.299,
+   0.228,
+   0.371
+  ],
+  "mae_cont": [
+   0.263,
+   0.213,
+   0.319
+  ],
+  "n": 56,
+  "delta_dino_cal_snap_menos_viejo_snap": [
+   -0.088,
+   -0.148,
+   -0.027
+  ],
+  "delta_dino_raw_cont_menos_viejo_cont": [
+   -0.038,
+   -0.077,
+   0.002
+  ],
+  "vacas_dino_mejor_igual_peor": [
+   32,
+   4,
+   20
+  ]
+ },
+ "B|recorte|coral|pliegues5_lr2-1e-05_margen0.1_batch16_ep": {
+  "mae_snap": [
+   0.25,
+   0.196,
+   0.304
+  ],
+  "mae_cont": [
+   0.265,
+   0.217,
+   0.316
+  ],
+  "n": 56,
+  "delta_dino_cal_snap_menos_viejo_snap": [
+   -0.039,
+   -0.089,
+   0.01
+  ],
+  "delta_dino_raw_cont_menos_viejo_cont": [
+   -0.04,
+   -0.078,
+   -0.004
+  ],
+  "vacas_dino_mejor_igual_peor": [
+   28,
+   4,
+   24
+  ]
+ },
+ "B|recorte|corn|pliegues5_lr2-1e-05_margen0.1_batch16_ep": {
+  "mae_snap": [
+   0.259,
+   0.196,
+   0.326
+  ],
+  "mae_cont": [
+   0.275,
+   0.223,
+   0.332
+  ],
+  "n": 56,
+  "delta_dino_cal_snap_menos_viejo_snap": [
+   -0.048,
+   -0.115,
+   0.019
+  ],
+  "delta_dino_raw_cont_menos_viejo_cont": [
+   -0.05,
+   -0.096,
+   -0.005
+  ],
+  "vacas_dino_mejor_igual_peor": [
+   29,
+   6,
+   21
+  ]
+ },
+ "B|recorte|regresion|pliegues5_lr2-1e-05_margen0.1_batch16_ep": {
+  "mae_snap": [
+   0.277,
+   0.214,
+   0.339
+  ],
+  "mae_cont": [
+   0.286,
+   0.232,
+   0.345
+  ],
+  "n": 56,
+  "delta_dino_cal_snap_menos_viejo_snap": [
+   -0.066,
+   -0.124,
+   -0.011
+  ],
+  "delta_dino_raw_cont_menos_viejo_cont": [
+   -0.061,
+   -0.105,
+   -0.018
+  ],
+  "vacas_dino_mejor_igual_peor": [
+   30,
+   7,
+   19
+  ]
+ },
+ "B|recorte|softmax|pliegues5_lr2-1e-05_margen0.1_batch16_ep": {
+  "mae_snap": [
+   0.268,
+   0.205,
+   0.335
+  ],
+  "mae_cont": [
+   0.277,
+   0.223,
+   0.332
+  ],
+  "n": 56,
+  "delta_dino_cal_snap_menos_viejo_snap": [
+   -0.057,
+   -0.118,
+   0.002
+  ],
+  "delta_dino_raw_cont_menos_viejo_cont": [
+   -0.052,
+   -0.092,
+   -0.013
+  ],
+  "vacas_dino_mejor_igual_peor": [
+   28,
+   5,
+   23
+  ]
+ },
+ "B|recorte|coral|pliegues5_lr2-3e-05_margen0.1_batch16_ep": {
+  "mae_snap": [
+   0.263,
+   0.21,
+   0.321
+  ],
+  "mae_cont": [
+   0.261,
+   0.212,
+   0.312
+  ],
+  "n": 56,
+  "delta_dino_cal_snap_menos_viejo_snap": [
+   -0.053,
+   -0.101,
+   -0.004
+  ],
+  "delta_dino_raw_cont_menos_viejo_cont": [
+   -0.036,
+   -0.074,
+   0.002
+  ],
+  "vacas_dino_mejor_igual_peor": [
+   28,
+   5,
+   23
+  ]
+ },
+ "B|recorte|corn|pliegues5_lr2-3e-05_margen0.1_batch16_ep": {
+  "mae_snap": [
+   0.25,
+   0.188,
+   0.317
+  ],
+  "mae_cont": [
+   0.266,
+   0.218,
+   0.318
+  ],
+  "n": 56,
+  "delta_dino_cal_snap_menos_viejo_snap": [
+   -0.039,
+   -0.103,
+   0.027
+  ],
+  "delta_dino_raw_cont_menos_viejo_cont": [
+   -0.041,
+   -0.081,
+   -0.0
+  ],
+  "vacas_dino_mejor_igual_peor": [
+   26,
+   7,
+   23
+  ]
+ },
+ "B|recorte|regresion|pliegues5_lr2-3e-05_margen0.1_batch16_ep": {
+  "mae_snap": [
+   0.268,
+   0.205,
+   0.33
+  ],
+  "mae_cont": [
+   0.272,
+   0.221,
+   0.327
+  ],
+  "n": 56,
+  "delta_dino_cal_snap_menos_viejo_snap": [
+   -0.057,
+   -0.116,
+   -0.002
+  ],
+  "delta_dino_raw_cont_menos_viejo_cont": [
+   -0.047,
+   -0.091,
+   -0.005
+  ],
+  "vacas_dino_mejor_igual_peor": [
+   28,
+   6,
+   22
+  ]
+ },
+ "B|recorte|softmax|pliegues5_lr2-3e-05_margen0.1_batch16_ep": {
+  "mae_snap": [
+   0.29,
+   0.223,
+   0.357
+  ],
+  "mae_cont": [
+   0.268,
+   0.217,
+   0.32
+  ],
+  "n": 56,
+  "delta_dino_cal_snap_menos_viejo_snap": [
+   -0.079,
+   -0.139,
+   -0.019
+  ],
+  "delta_dino_raw_cont_menos_viejo_cont": [
+   -0.043,
+   -0.081,
+   -0.007
+  ],
+  "vacas_dino_mejor_igual_peor": [
+   30,
+   4,
+   22
+  ]
+ },
+ "A|completa|coral|pliegues5_epocas30_paciencia8_margen0.1": {
+  "mae_snap": [
+   0.305,
+   0.249,
+   0.363
+  ],
+  "mae_cont": [
+   0.311,
+   0.261,
+   0.365
+  ],
+  "n": 56,
+  "delta_dino_cal_snap_menos_viejo_snap": [
+   -0.094,
+   -0.146,
+   -0.041
+  ],
+  "delta_dino_raw_cont_menos_viejo_cont": [
+   -0.086,
+   -0.127,
+   -0.046
+  ],
+  "vacas_dino_mejor_igual_peor": [
+   38,
+   1,
+   17
+  ]
+ },
+ "A|completa|corn|pliegues5_epocas30_paciencia8_margen0.1": {
+  "mae_snap": [
+   0.318,
+   0.253,
+   0.388
+  ],
+  "mae_cont": [
+   0.301,
+   0.247,
+   0.358
+  ],
+  "n": 56,
+  "delta_dino_cal_snap_menos_viejo_snap": [
+   -0.108,
+   -0.169,
+   -0.047
+  ],
+  "delta_dino_raw_cont_menos_viejo_cont": [
+   -0.076,
+   -0.118,
+   -0.032
+  ],
+  "vacas_dino_mejor_igual_peor": [
+   34,
+   1,
+   21
+  ]
+ },
+ "A|completa|regresion|pliegues5_epocas30_paciencia8_margen0.1": {
+  "mae_snap": [
+   0.357,
+   0.301,
+   0.414
+  ],
+  "mae_cont": [
+   0.363,
+   0.309,
+   0.419
+  ],
+  "n": 56,
+  "delta_dino_cal_snap_menos_viejo_snap": [
+   -0.146,
+   -0.199,
+   -0.094
+  ],
+  "delta_dino_raw_cont_menos_viejo_cont": [
+   -0.138,
+   -0.181,
+   -0.096
+  ],
+  "vacas_dino_mejor_igual_peor": [
+   45,
+   1,
+   10
+  ]
+ },
+ "A|completa|softmax|pliegues5_epocas30_paciencia8_margen0.1": {
+  "mae_snap": [
+   0.356,
+   0.293,
+   0.421
+  ],
+  "mae_cont": [
+   0.309,
+   0.26,
+   0.361
+  ],
+  "n": 56,
+  "delta_dino_cal_snap_menos_viejo_snap": [
+   -0.145,
+   -0.203,
+   -0.087
+  ],
+  "delta_dino_raw_cont_menos_viejo_cont": [
+   -0.084,
+   -0.124,
+   -0.044
+  ],
+  "vacas_dino_mejor_igual_peor": [
+   39,
+   2,
+   15
+  ]
+ },
+ "A|recorte|coral|pliegues5_epocas30_paciencia8_margen0.1": {
+  "mae_snap": [
+   0.266,
+   0.216,
+   0.32
+  ],
+  "mae_cont": [
+   0.271,
+   0.224,
+   0.319
+  ],
+  "n": 56,
+  "delta_dino_cal_snap_menos_viejo_snap": [
+   -0.056,
+   -0.103,
+   -0.01
+  ],
+  "delta_dino_raw_cont_menos_viejo_cont": [
+   -0.046,
+   -0.078,
+   -0.013
+  ],
+  "vacas_dino_mejor_igual_peor": [
+   34,
+   0,
+   22
+  ]
+ },
+ "A|recorte|corn|pliegues5_epocas30_paciencia8_margen0.1": {
+  "mae_snap": [
+   0.268,
+   0.21,
+   0.33
+  ],
+  "mae_cont": [
+   0.27,
+   0.219,
+   0.324
+  ],
+  "n": 56,
+  "delta_dino_cal_snap_menos_viejo_snap": [
+   -0.057,
+   -0.111,
+   -0.007
+  ],
+  "delta_dino_raw_cont_menos_viejo_cont": [
+   -0.045,
+   -0.081,
+   -0.01
+  ],
+  "vacas_dino_mejor_igual_peor": [
+   31,
+   2,
+   23
+  ]
+ },
+ "A|recorte|regresion|pliegues5_epocas30_paciencia8_margen0.1": {
+  "mae_snap": [
+   0.308,
+   0.257,
+   0.363
+  ],
+  "mae_cont": [
+   0.321,
+   0.274,
+   0.373
+  ],
+  "n": 56,
+  "delta_dino_cal_snap_menos_viejo_snap": [
+   -0.097,
+   -0.145,
+   -0.049
+  ],
+  "delta_dino_raw_cont_menos_viejo_cont": [
+   -0.096,
+   -0.133,
+   -0.057
+  ],
+  "vacas_dino_mejor_igual_peor": [
+   39,
+   1,
+   16
+  ]
+ },
+ "A|recorte|softmax|pliegues5_epocas30_paciencia8_margen0.1": {
+  "mae_snap": [
+   0.283,
+   0.229,
+   0.341
+  ],
+  "mae_cont": [
+   0.268,
+   0.22,
+   0.32
+  ],
+  "n": 56,
+  "delta_dino_cal_snap_menos_viejo_snap": [
+   -0.072,
+   -0.127,
+   -0.015
+  ],
+  "delta_dino_raw_cont_menos_viejo_cont": [
+   -0.043,
+   -0.078,
+   -0.009
+  ],
+  "vacas_dino_mejor_igual_peor": [
+   34,
+   2,
+   20
+  ]
+ }
+}

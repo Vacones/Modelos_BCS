@@ -1,8 +1,8 @@
-"""Pilot: frozen features + sklearn heads, repeated GroupKFold by cow (5x10),
-hyper-parameters chosen ONLY by inner GroupKFold(3) on the training fold.
-Metrics are per cow (each cow weighs once), 95% bootstrap CIs over cows.
+"""Compara cabezas de scikit-learn sobre características congeladas con GroupKFold por vaca repetido (5x10).
+Los hiperparámetros se eligen solo con un GroupKFold(3) interno dentro de las vacas de entrenamiento.
+Las métricas son por vaca, cada vaca pesa una vez, con intervalos de 95 % por bootstrap sobre vacas.
 
-Usage: python evaluar_cabezas.py FEATS_DIR [OUT_JSON]
+Uso: python evaluar_cabezas.py DIR_CARACTERISTICAS [SALIDA_JSON]
 """
 import sys, os, json, time, warnings
 import numpy as np, pandas as pd
@@ -14,9 +14,8 @@ from sklearn.linear_model import Ridge, LogisticRegression
 from sklearn.metrics import roc_auc_score
 warnings.filterwarnings("ignore")
 
-LEV = np.array([2.5, 2.75, 3.0, 3.25, 3.5, 3.75])  # 2.25 merged into 2.50 for class heads (2 photos)
+LEV = np.array([2.5, 2.75, 3.0, 3.25, 3.5, 3.75])  # 2.25 se une con 2.50 en las cabezas de clases (solo 2 fotos)
 GRID_MIN, GRID_MAX = 2.25, 3.75
-ALIAS = {"2107": "1548"}  # possibly the same animal -> same CV group
 N_SPLITS, N_REP, N_BOOT = 5, 10, 2000
 PCA_DIM = 128
 
@@ -45,20 +44,20 @@ def fit_predict(head, hp, Xtr, ytr, Xte):
         if head == "mlog":
             m = LogisticRegression(C=hp, max_iter=3000).fit(Xtr, k)
             P = np.zeros((len(Xte), len(LEV))); P[:, m.classes_] = m.predict_proba(Xte)
-        else:  # Gaussian soft labels (sigma 0.125) via replicated, weighted samples
+        else:  # etiquetas suaves gaussianas (sigma 0.125) con muestras repetidas y pesadas
             W = np.exp(-0.5 * ((LEV[None, :] - np.maximum(ytr, 2.5)[:, None]) / 0.125) ** 2); W /= W.sum(1, keepdims=True)
             rr, cc = np.nonzero(W > 1e-3)
             m = LogisticRegression(C=hp, max_iter=3000).fit(Xtr[rr], cc, sample_weight=W[rr, cc])
             P = np.zeros((len(Xte), len(LEV))); P[:, m.classes_] = m.predict_proba(Xte)
         return P @ LEV
-    if head == "coral":  # shared weights, one bias per threshold (K-1 binary tasks)
-        K1 = len(LEV) - 1; k = cls_idx(ytr); B = 10.0  # bias columns scaled so the L2 penalty barely touches them
+    if head == "coral":  # pesos compartidos y un sesgo por umbral (K-1 tareas binarias)
+        K1 = len(LEV) - 1; k = cls_idx(ytr); B = 10.0  # columnas de sesgo escaladas para que la penalización L2 casi no las afecte
         Xe = np.vstack([np.hstack([Xtr, B * np.eye(K1)[[t] * len(Xtr)]]) for t in range(K1)])
         ye = np.concatenate([(k > t).astype(int) for t in range(K1)])
         m = LogisticRegression(C=hp, max_iter=3000, fit_intercept=False).fit(Xe, ye)
         w, b = m.coef_[0, :-K1], B * m.coef_[0, -K1:]
         Pgt = 1 / (1 + np.exp(-(Xte @ w)[:, None] - b[None, :]))
-        Pgt = np.minimum.accumulate(Pgt, axis=1)  # enforce monotone cumulative probs
+        Pgt = np.minimum.accumulate(Pgt, axis=1)  # probabilidades acumuladas monótonas
         return LEV[0] + 0.25 * Pgt.sum(1)
     raise ValueError(head)
 
@@ -76,7 +75,7 @@ def nested_fold(X, y, g, tr, te, head, pca):
             a, b = prep(X[tr][itr], X[tr][ite], pca)
             p = fit_predict(head, hp, a, y[tr][itr], b)
             d = pd.DataFrame({"g": g[tr][ite], "p": p, "y": y[tr][ite]}).groupby("g").mean()
-            err.append(np.abs(d.p - d.y).mean())  # inner criterion: per-cow MAE
+            err.append(np.abs(d.p - d.y).mean())  # criterio interno: MAE por vaca
         scores.append(np.mean(err))
     hp = GRIDS[head][int(np.argmin(scores))]
     a, b = prep(X[tr], X[te], pca)
@@ -95,17 +94,17 @@ def constant_baseline(y, g, cows, ycow):
     out = np.zeros((N_REP, len(y)))
     for r in range(N_REP):
         for tr, te in GroupKFold(N_SPLITS, shuffle=True, random_state=r).split(y, y, g):
-            out[r, te] = np.median(ycow[np.isin(cows, np.unique(g[tr]))])  # median over training COWS
+            out[r, te] = np.median(ycow[np.isin(cows, np.unique(g[tr]))])  # mediana sobre las vacas de entrenamiento
     return out
 
 
 def per_cow(pred_img, g, cows):
-    """(N_REP, n_img) -> (N_REP, n_cows): mean of the cow's photo predictions."""
+    """(N_REP, n_fotos) a (N_REP, n_vacas): media de las predicciones de las fotos de cada vaca."""
     return np.stack([pd.Series(p).groupby(g).mean().reindex(cows).values for p in pred_img])
 
 
 def cow_stats(pc, ycow):
-    """Per-cow quantities averaged over repeats (each cow weighs once)."""
+    """Errores por vaca promediados sobre las repeticiones, cada vaca pesa una vez."""
     e = np.abs(pc - ycow); es = np.abs(snap(pc) - ycow)
     return {"ae": e.mean(0), "ae_snap": es.mean(0), "w25": (es <= 0.25 + 1e-9).mean(0),
             "w50": (es <= 0.50 + 1e-9).mean(0), "pred": pc.mean(0)}
@@ -138,7 +137,7 @@ def summarize(st, ycow, rng):
 def main():
     fdir = sys.argv[1]; out_json = sys.argv[2] if len(sys.argv) > 2 else os.path.join(fdir, "resultados.json")
     idx = pd.read_csv(os.path.join(fdir, "index.csv"), dtype={"cow_id": str})
-    g = idx.cow_id.map(lambda c: ALIAS.get(c, c)).values; y = idx.bcs.values.astype(float)
+    g = idx.cow_id.values; y = idx.bcs.values.astype(float)
     cows = np.unique(g); ycow = pd.Series(y).groupby(g).first().reindex(cows).values
     assert (pd.Series(y).groupby(g).nunique() == 1).all(), "a cow has >1 BCS label"
     feats = sorted(f[:-4] for f in os.listdir(fdir) if f.endswith(".npy"))
@@ -155,7 +154,7 @@ def main():
     ST = {k: cow_stats(v, ycow) for k, v in PC.items()}
     R = {"n_cows": int(len(cows)), "n_images": int(len(y)), "cow_bcs_counts": pd.Series(ycow).value_counts().sort_index().to_dict(),
          "configs": {k: summarize(ST[k], ycow, rng) for k in PC}, "hp_chosen": {k: {str(a): int(b) for a, b in v.items()} for k, v in HP.items()}}
-    # paired differences in per-cow absolute error (continuous mean prediction); negative = better than reference
+    # diferencias pareadas del error absoluto por vaca. Un valor negativo es mejor que la referencia
     model_keys = [k for k in PC if k != "const_median"]
     best = min(model_keys, key=lambda k: R["configs"][k]["ae"][0])
     R["best_config"] = best

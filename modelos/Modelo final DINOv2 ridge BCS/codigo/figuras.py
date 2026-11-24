@@ -1,12 +1,13 @@
-"""Figures and summary numbers of the final model (out-of-fold, annotated boxes).
+"""Figuras y resumen del modelo final, fuera de pliegue y con las cajas anotadas.
 
-Final recipe: rump crop +10%, DINOv2-S (CLS + mean patch token, flip TTA), ridge alpha 100, linear calibration
-fitted inside each training fold (inner GroupKFold 5 on per-cow OOF predictions). GroupKFold by cow 5x10.
-Per-cow prediction = mean over the 10 repeats of the mean of its photos.
+Receta final: recorte de la grupa con 10 % de margen, DINOv2-S (token CLS y media de parches, con foto espejada),
+ridge alfa 100 y calibración lineal ajustada dentro de cada pliegue de entrenamiento (GroupKFold 5 interno sobre
+predicciones por vaca). GroupKFold por vaca 5x10. La predicción por vaca es la media de las 10 repeticiones de la
+media de sus fotos.
 
-Usage: python figuras.py DATA_YOLO META PESOS RESULTADOS_DIR
-Writes fig_real_vs_predicho.png, fig_error_por_nivel.png, fig_comparacion_modelos.png and
-resumen_modelo_final.json into RESULTADOS_DIR. No per-cow ids are written.
+Uso: python figuras.py DATOS_YOLO METADATA PESOS DIR_RESULTADOS
+Escribe fig_real_vs_predicho.png, fig_error_por_nivel.png, fig_comparacion_modelos.png y
+resumen_modelo_final.json en DIR_RESULTADOS. No escribe identificadores de vacas.
 """
 import sys, os, json
 import numpy as np, pandas as pd, torch
@@ -22,7 +23,7 @@ from sklearn.pipeline import make_pipeline
 AQUI = os.path.dirname(os.path.abspath(__file__)); sys.path.insert(0, AQUI)
 import bcs_comun as C  # noqa: E402
 
-ALIAS = {"2107": "1548"}; SPLIT = {"train": "train", "val": "valid", "test": "test"}
+SPLIT = {"train": "train", "val": "valid", "test": "test"}
 N_SPLITS, N_REP, ALPHA, UMBRAL = 5, 10, 100.0, 2.90
 AZUL, NARANJA, GRIS = "#0072B2", "#E69F00", "#7F7F7F"
 plt.rcParams.update({"font.family": "DejaVu Sans", "font.size": 10, "axes.spines.top": False, "axes.spines.right": False,
@@ -50,7 +51,7 @@ def main():
         sel = C.elegir_grupa(C.leer_txt_yolo(os.path.join(d, "labels", os.path.splitext(r.file_name)[0] + ".txt")))
         crops.append(C.recortar(Image.open(os.path.join(d, "images", r.file_name)).convert("RGB"), sel[1]))
     X = C.features(C.cargar_dinov2(pesos), crops); y = meta.bcs.values.astype(float)
-    g = meta.cow_id.map(lambda c: ALIAS.get(c, c)).values
+    g = meta.cow_id.values
     cows = np.unique(g); yc = pd.Series(y).groupby(g).first().reindex(cows).values
     Praw = np.zeros((N_REP, len(cows))); Pcal = np.zeros((N_REP, len(cows)))
     for r in range(N_REP):
@@ -63,7 +64,7 @@ def main():
             Praw[r, idx] = p.values; Pcal[r, idx] = a * p.values + b
     raw = pd.DataFrame([metricas(Praw[r], yc) for r in range(N_REP)]).mean().to_dict()
     cal = pd.DataFrame([metricas(Pcal[r], yc) for r in range(N_REP)]).mean().to_dict()
-    pc = Pcal.mean(0)  # per-cow calibrated prediction averaged over repeats (for the figures)
+    pc = Pcal.mean(0)  # predicción calibrada por vaca promediada sobre las repeticiones, para las figuras
     ae = np.abs(Pcal - yc).mean(0); const_ae = np.abs(yc - 3.0)
     niveles = np.unique(yc)
     por_nivel = {f"{l:.2f}": {"n_vacas": int((yc == l).sum()), "mae_modelo": float(ae[yc == l].mean()), "mae_constante": float(const_ae[yc == l].mean())} for l in niveles}
@@ -75,7 +76,7 @@ def main():
     json.dump(R, open(os.path.join(out, "resumen_modelo_final.json"), "w"), indent=1)
     print(json.dumps(R, indent=1))
 
-    # ---- figure 1: real vs predicted
+    # ---- figura 1: real contra predicho
     rng = np.random.default_rng(0); jit = rng.uniform(-0.06, 0.06, len(yc))
     fig, ax = plt.subplots(figsize=(5.6, 5.0))
     ax.plot([2.1, 3.9], [2.1, 3.9], color=GRIS, lw=1, ls="--", label="Predicción perfecta")
@@ -85,7 +86,7 @@ def main():
     ax.set_xlabel("BCS del veterinario"); ax.set_ylabel("BCS predicho (calibrado)"); ax.legend(frameon=False, loc="upper left", fontsize=9)
     ax.grid(alpha=.25, lw=.5); fig.tight_layout(); fig.savefig(os.path.join(out, "fig_real_vs_predicho.png"), dpi=150); plt.close(fig)
 
-    # ---- figure 2: MAE per level
+    # ---- figura 2: MAE por nivel de BCS
     fig, ax = plt.subplots(figsize=(7.0, 4.2)); x = np.arange(len(niveles)); w = .38
     mm = [por_nivel[f"{l:.2f}"]["mae_modelo"] for l in niveles]; mc = [por_nivel[f"{l:.2f}"]["mae_constante"] for l in niveles]
     ax.bar(x - w / 2, mm, w, color=AZUL, label="Modelo final")
@@ -94,7 +95,7 @@ def main():
     ax.set_xlabel("BCS del veterinario (n = vacas)"); ax.set_ylabel("MAE por vaca"); ax.legend(frameon=False)
     ax.grid(axis="y", alpha=.25, lw=.5); fig.tight_layout(); fig.savefig(os.path.join(out, "fig_error_por_nivel.png"), dpi=150); plt.close(fig)
 
-    # ---- figure 3: model comparison (same 66-cow folds)
+    # ---- figura 3: comparación de modelos con los mismos pliegues de 66 vacas
     rc = json.load(open(os.path.join(out, "resultados_cierre.json"))); r1 = json.load(open(os.path.join(out, "resultados.json")))
     filas = [("Constante 3.00", rc["configs"]["const_mediana"]["ae"]),
              ("EfficientNet-B0 congelado + CORAL", r1["configs"]["b0_224|coral+pca"]["ae"]),
