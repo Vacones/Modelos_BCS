@@ -1,0 +1,81 @@
+{
+ "protocolo": "GroupKFold por vaca 5x10, alpha fijo; metricas por vaca promediadas sobre las 10 repeticiones",
+ "sin_calibrar": {
+  "mae": 0.20576590185659258,
+  "mae_redondeado": 0.19924242424242425,
+  "dentro_025": 0.843939393939394,
+  "dentro_050": 0.9878787878787879,
+  "pendiente": 0.5008798317794969,
+  "mae_vacas_ge350": 0.36498065718516537,
+  "n_ge350": 13.0,
+  "mae_vacas_le250": 0.23808671700643572,
+  "n_le250": 14.0,
+  "sesgo": -0.004443508100643088
+ },
+ "calibrado": {
+  "mae": 0.19580922658103372,
+  "mae_redondeado": 0.18333333333333335,
+  "dentro_025": 0.8727272727272727,
+  "dentro_050": 0.9833333333333334,
+  "pendiente": 0.6024130562213383,
+  "mae_vacas_ge350": 0.31231345325883947,
+  "n_ge350": 13.0,
+  "mae_vacas_le250": 0.21182677381960202,
+  "n_le250": 14.0,
+  "sesgo": 2.517083763642347e-16
+ },
+ "nota_calibrado": "a y b se ajustaron sobre estas mismas predicciones OOF: las metricas calibradas son algo optimistas. La estimacion anidada honesta (evaluar_externos.py, config e_ridge_calib) fue MAE 0.205.",
+ "alerta_flaca": {
+  "umbral": 2.9,
+  "sensibilidad": 0.8038461538461539,
+  "especificidad": 0.89,
+  "n_flacas": 26,
+  "curva": [
+   [
+    2.7,
+    0.38846153846153847,
+    0.99
+   ],
+   [
+    2.75,
+    0.46923076923076923,
+    0.98
+   ],
+   [
+    2.8,
+    0.573076923076923,
+    0.9675
+   ],
+   [
+    2.85,
+    0.7038461538461539,
+    0.9325
+   ],
+   [
+    2.9,
+    0.8038461538461539,
+    0.89
+   ],
+   [
+    2.95,
+    0.8692307692307693,
+    0.85
+   ],
+   [
+    3.0,
+    0.9423076923076923,
+    0.76
+   ],
+   [
+    3.05,
+    0.9692307692307692,
+    0.6775
+   ],
+   [
+    3.1,
+    0.9730769230769231,
+    0.5925
+   ]
+  ]
+ }
+}

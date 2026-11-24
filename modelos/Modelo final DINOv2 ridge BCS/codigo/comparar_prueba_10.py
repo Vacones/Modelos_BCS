@@ -1,6 +1,7 @@
-"""Apples-to-apples vs the old EfficientNet-B0 CORAL model: train DINOv2-S + ridge (+linear
-calibration) on the 56 train+valid cows, predict the 10 test cows of metadata_bcs_validos.csv.
-Usage: python comparar_prueba_10.py DATA_YOLO META WEIGHTS PRUEBA_FINAL_OLD_CSV
+"""Comparación en las mismas 10 vacas de prueba del modelo ordinal EfficientNet-B0 + CORAL.
+Entrena DINOv2-S + ridge con calibración lineal en las 56 vacas de train y valid y predice las 10 de test.
+Estas vacas también entraron en la validación cruzada de 66 vacas, así que el resultado es indicativo.
+Uso: python comparar_prueba_10.py DATOS_YOLO METADATA PESOS PRUEBA_FINAL_ORDINAL_CSV
 """
 import sys, os
 import numpy as np, pandas as pd, torch, timm
@@ -30,7 +31,7 @@ def fit(Xa, ya, a):
 def cow_mae(p, yy, gg):
     d = pd.DataFrame({"g": gg, "p": p, "y": yy}).groupby("g").mean(); return np.abs(d.p - d.y).mean(), d
 
-# choose alpha + calibration with grouped 5-fold OOF on the 56 cows only
+# alfa y calibración elegidos con GroupKFold de 5 pliegues solo dentro de las 56 vacas
 best = None
 for a in ALPHAS:
     oof = np.zeros(tr.sum())

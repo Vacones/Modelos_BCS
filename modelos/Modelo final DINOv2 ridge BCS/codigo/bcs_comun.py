@@ -1,4 +1,4 @@
-"""Shared pieces of the final BCS model (crop, DINOv2-S features, head)."""
+"""Piezas comunes del modelo final de BCS: elección de la grupa, recorte y características de DINOv2-S."""
 import os
 import numpy as np, torch, timm
 from PIL import Image
@@ -6,13 +6,17 @@ from PIL import Image
 MARGEN = 0.10
 SIZE = 224
 MEAN, STD = (0.485, 0.456, 0.406), (0.229, 0.224, 0.225)
-ID_ASS, ID_COW = 0, 1  # class ids in the Roboflow "Cajas v2" export: ['ass', 'cow']
+ID_ASS, ID_COW = 0, 1  # índices de clase en el export de Roboflow "Cajas v2": ['ass', 'cow']
 
 
 def elegir_grupa(cajas):
-    """cajas: list of (cls, conf, (cx, cy, w, h)) normalized. Returns (conf, box) of the rump to use or None.
-    Rule: highest-confidence cow, then highest-confidence rump whose center lies inside it.
-    Fallback: highest-confidence rump when there is no cow box."""
+    """Elige la caja de grupa que se usa en una foto.
+
+    cajas: lista de (clase, confianza, (cx, cy, w, h)) en coordenadas normalizadas.
+    Devuelve (confianza, caja) de la grupa o None.
+    Regla: se toma la vaca de mayor confianza y, dentro de ella, la grupa de mayor confianza cuyo centro
+    queda dentro de la caja de la vaca. Si no hay caja de vaca, se toma la grupa de mayor confianza.
+    """
     cows = [(c, b) for k, c, b in cajas if k == ID_COW]
     asses = [(c, b) for k, c, b in cajas if k == ID_ASS]
     if not asses:
@@ -25,6 +29,7 @@ def elegir_grupa(cajas):
 
 
 def leer_txt_yolo(ruta):
+    """Lee un txt en formato YOLO. La sexta columna, si existe, es la confianza."""
     out = []
     for ln in open(ruta):
         p = ln.split()
@@ -34,6 +39,7 @@ def leer_txt_yolo(ruta):
 
 
 def recortar(img, b):
+    """Recorta la caja b con un margen de 10 % por lado, sin salirse de la foto."""
     W, H = img.size; cx, cy, w, h = b
     w2, h2 = w * (1 + 2 * MARGEN) / 2, h * (1 + 2 * MARGEN) / 2
     box = (max(0, (cx - w2) * W), max(0, (cy - h2) * H), min(W, (cx + w2) * W), min(H, (cy + h2) * H))
@@ -47,6 +53,7 @@ def a_tensor(img):
 
 
 def cargar_dinov2(ruta_pesos):
+    """Carga DINOv2 ViT-S/14 de timm con los pesos oficiales en formato safetensors, sin la capa de salida."""
     from safetensors.torch import load_file
     from timm.models.vision_transformer import checkpoint_filter_fn
     m = timm.create_model("vit_small_patch14_dinov2", pretrained=False, num_classes=0, img_size=SIZE)
@@ -58,7 +65,7 @@ def cargar_dinov2(ruta_pesos):
 
 @torch.no_grad()
 def features(model, crops, bs=16):
-    """CLS + mean patch token, averaged with the horizontally flipped image (flip TTA). -> (n, 768)"""
+    """Token CLS más la media de los tokens de parche, promediado con la imagen espejada. Devuelve (n, 768)."""
     def f(x):
         t = model.forward_features(x)
         return torch.cat([t[:, 0], t[:, model.num_prefix_tokens:].mean(1)], 1)

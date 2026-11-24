@@ -1,8 +1,11 @@
-"""(1) Check that in the Roboflow export class 0 = ass (rump, small, inside) and 1 = cow (big).
-(2) Paired per-cow comparison old EfficientNet-B0 CORAL (BCS_ordinal CV predictions, 56 cows)
-    vs DINOv2-S + ridge (+calibration fitted inside the fold) with a comparable protocol
-    (5-fold GroupKFold on the same 56 train+valid cows, 10 repeats).
-Usage: python verificar_y_comparar.py DATA_YOLO META PESOS PRED_B_CSV PRED_A_CSV
+"""Dos revisiones contra el modelo ordinal EfficientNet-B0 + CORAL.
+
+(1) Comprueba que en el export de Roboflow la clase 0 es ass (grupa, caja chica y dentro de la vaca)
+    y la clase 1 es cow (caja grande).
+(2) Compara por vaca el modelo ordinal (predicciones de su validación cruzada en 56 vacas) contra
+    DINOv2-S + ridge con calibración ajustada dentro del pliegue, con un protocolo comparable:
+    GroupKFold de 5 pliegues sobre las mismas 56 vacas de train y valid, 10 repeticiones.
+Uso: python comparar_b0.py DATOS_YOLO METADATA PESOS PRED_B_CSV PRED_A_CSV
 """
 import sys, os, glob, json
 import numpy as np, pandas as pd, torch
@@ -15,7 +18,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import bcs_comun as C  # noqa: E402
 
 data, meta_csv, pesos, pb, pa = sys.argv[1:6]
-# ---- (1) class geometry
+# ---- (1) geometría de las clases
 n, ok_small, ok_inside = 0, 0, 0
 for f in glob.glob(os.path.join(data, "*", "labels", "*.txt")):
     bx = C.leer_txt_yolo(f); a = [b for k, _, b in bx if k == 0]; c = [b for k, _, b in bx if k == 1]
@@ -24,7 +27,7 @@ for f in glob.glob(os.path.join(data, "*", "labels", "*.txt")):
         ok_inside += abs(a[0][0] - c[0][0]) <= c[0][2] / 2 and abs(a[0][1] - c[0][1]) <= c[0][3] / 2
 print(f"[clases] archivos con ambas cajas: {n}; clase0 mas chica que clase1: {ok_small}; centro clase0 dentro de clase1: {ok_inside}")
 
-# ---- (2) paired comparison
+# ---- (2) comparación pareada por vaca
 meta = pd.read_csv(meta_csv, dtype={"cow_id": str}); meta = meta[meta.metadata_status == "ok"].reset_index(drop=True)
 SPLIT = {"train": "train", "val": "valid", "test": "test"}
 crops = []
@@ -56,7 +59,6 @@ for path, exp in ((pb, "B"), (pa, "A")):
     df = df[df.cabeza != "constante"]
     print(f"[{exp}] configs:", df.groupby(["config", "entrada", "cabeza"]).size().to_dict() if exp == "B" else df.groupby(["entrada", "cabeza"]).size().to_dict())
     for keys, dd in df.groupby(["config", "entrada", "cabeza"]):
-        per = dd.groupby("vaca").apply(lambda t: pd.Series({"snap": np.abs(t.bcs_pred - t.bcs_pred * 0 + 0).mean(), "pred": t.bcs_pred.mean(), "cont": t.bcs_cont.mean()}))
         e_snap = dd.assign(e=np.abs(dd.bcs_pred - pd.Series(yc, cows).reindex(dd.vaca).values)).groupby("vaca").e.mean()
         e_cont = dd.assign(e=np.abs(dd.bcs_cont - pd.Series(yc, cows).reindex(dd.vaca).values)).groupby("vaca").e.mean()
         old[f"{exp}|{keys[1]}|{keys[2]}|{keys[0][:40]}"] = (e_snap.reindex(cows).values, e_cont.reindex(cows).values)

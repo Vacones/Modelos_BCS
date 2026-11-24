@@ -55,6 +55,10 @@ inventario.csv
 *.pth
 *.ckpt
 *.onnx
+*.joblib
+*.pkl
+*.safetensors
+**/privado/
 **/ejecucion.log
 
 # Documentos y hojas de trabajo locales
@@ -90,3 +94,9 @@ salida*/
 !evaluacion/comparacion_modelos/figuras/clasificadores_pareados_val.png
 !evaluacion/comparacion_modelos/figuras/cobertura_y_mae_vaca_val.png
 !evaluacion/comparacion_modelos/figuras/matrices_confusion_pareadas_val.png
+
+# Modelo final: solo resultados agregados y figuras revisadas, sin identificadores
+!modelos/Modelo final DINOv2 ridge BCS/resultados/
+!modelos/Modelo final DINOv2 ridge BCS/resultados/*.json
+!modelos/Modelo final DINOv2 ridge BCS/resultados/*.md
+!modelos/Modelo final DINOv2 ridge BCS/resultados/fig_*.png

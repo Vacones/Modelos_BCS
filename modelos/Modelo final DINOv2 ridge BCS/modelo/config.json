@@ -1,7 +1,7 @@
 {
  "creado": "2026-11-12",
  "backbone": "timm vit_small_patch14_dinov2.lvd142m (DINOv2 ViT-S/14), congelado",
- "pesos_backbone": "pesos\\dinov2_vits14.safetensors",
+ "pesos_backbone": "pesos/dinov2_vits14.safetensors",
  "entrada": {
   "recorte": "caja 'ass' (grupa) dentro de la caja 'cow' de mayor confianza, margen 10%",
   "margen": 0.1,
@@ -60,7 +60,7 @@
   "ultralytics": "8.4.211"
  },
  "detector": {
-  "ruta": "detector\\best.pt",
+  "ruta": "detector/best.pt",
   "modelo": "YOLO26n (ultralytics 8.4.211), imgsz 640",
   "entrenado_con": "Roboflow Cajas v2, split train (243 fotos), parada temprana con valid (mejor epoca 136)",
   "clases": {

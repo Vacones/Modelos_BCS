@@ -1,11 +1,12 @@
-"""Pilot: crop the annotated rump ('ass') box with 10% margin and extract frozen
-features with horizontal-flip test-time averaging.
+"""Recorta la caja anotada de la grupa ('ass') con 10 % de margen y extrae características de redes
+congeladas, promediando cada foto con su versión espejada.
 
-Usage:
+Uso:
   python extraer_features.py --data DIR_YOLO --meta metadata_bcs_validos.csv \
-      --out FEATS_DIR --b0-weights efficientnet_b0_ra-3dd342df.pth \
-      [--dino-s PATH_vits14.(pth|safetensors)] [--dino-b PATH_vitb14...]
-Features are written to FEATS_DIR (keep it OUTSIDE shared folders: derived from private photos).
+      --out DIR_CARACTERISTICAS --b0-weights efficientnet_b0_ra-3dd342df.pth \
+      [--dino-s RUTA_vits14.(pth|safetensors)] [--dino-b RUTA_vitb14...]
+Las características y el índice se escriben en DIR_CARACTERISTICAS. Esa carpeta debe quedar fuera de
+cualquier carpeta compartida porque se deriva de fotos privadas.
 """
 import argparse, os, time, json
 import numpy as np, pandas as pd, torch, timm
@@ -16,7 +17,7 @@ SPLIT_DIR = {"train": "train", "val": "valid", "test": "test"}
 
 
 def leer_cajas(ruta_txt, id_ass=0, id_cow=1):
-    """Same rule as modeling/con_cajas_ordinal/bcs_ordinal.py: rump box inside the cow box."""
+    """Misma regla que modelos/con_cajas_ordinal/bcs_ordinal.py: la grupa debe estar dentro de la vaca."""
     cows, asses = [], []
     for ln in open(ruta_txt):
         p = ln.split()
@@ -56,7 +57,7 @@ def cargar_pesos(model, path):
     sd = {k: v for k, v in sd.items() if not k.startswith(("classifier.", "head.", "fc."))}
     try:
         missing, unexpected = model.load_state_dict(sd, strict=False)
-    except RuntimeError:  # e.g. pos_embed size mismatch from original FB checkpoints
+    except RuntimeError:  # por ejemplo, pos_embed de otro tamaño en los checkpoints originales de Meta
         from timm.models.vision_transformer import checkpoint_filter_fn
         missing, unexpected = model.load_state_dict(checkpoint_filter_fn(sd, model), strict=False)
     assert len(missing) == 0, f"missing keys: {missing[:5]}"
@@ -81,7 +82,7 @@ def modelos(args):
 def feats(m, x, modo):
     if modo == "pool":
         return m(x)
-    t = m.forward_features(x)  # (B, 1+N, D) for timm dinov2 (no reg tokens)
+    t = m.forward_features(x)  # (B, 1+N, D) en el DINOv2 de timm, sin tokens de registro
     return torch.cat([t[:, 0], t[:, m.num_prefix_tokens:].mean(1)], 1)
 
 

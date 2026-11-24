@@ -1,0 +1,66 @@
+{
+ "protocolo": "GroupKFold por vaca 5x10, ridge alfa 100, calibracion dentro del fold, cajas anotadas, 66 vacas",
+ "sin_calibrar": {
+  "mae": 0.20576590516350485,
+  "mae_redondeado": 0.19924242424242425,
+  "dentro_025": 0.843939393939394,
+  "dentro_050": 0.9878787878787879,
+  "pendiente": 0.500879838468386,
+  "sens_flaca": 0.7923076923076922,
+  "espec_flaca": 0.9000000000000001
+ },
+ "calibrado_en_fold": {
+  "mae": 0.19893768618111002,
+  "mae_redondeado": 0.19053030303030302,
+  "dentro_025": 0.8681818181818182,
+  "dentro_050": 0.9833333333333334,
+  "pendiente": 0.5899114131004171,
+  "sens_flaca": 0.7923076923076924,
+  "espec_flaca": 0.8950000000000001
+ },
+ "umbral_alerta": 2.9,
+ "por_nivel": {
+  "2.25": {
+   "n_vacas": 1,
+   "mae_modelo": 0.4229475578642359,
+   "mae_constante": 0.75
+  },
+  "2.50": {
+   "n_vacas": 13,
+   "mae_modelo": 0.20409062238218423,
+   "mae_constante": 0.5
+  },
+  "2.75": {
+   "n_vacas": 12,
+   "mae_modelo": 0.13128005587558064,
+   "mae_constante": 0.25
+  },
+  "3.00": {
+   "n_vacas": 16,
+   "mae_modelo": 0.1600910077317118,
+   "mae_constante": 0.0
+  },
+  "3.25": {
+   "n_vacas": 11,
+   "mae_modelo": 0.16124514029198012,
+   "mae_constante": 0.25
+  },
+  "3.50": {
+   "n_vacas": 7,
+   "mae_modelo": 0.37818878815216916,
+   "mae_constante": 0.5
+  },
+  "3.75": {
+   "n_vacas": 6,
+   "mae_modelo": 0.24932113077155124,
+   "mae_constante": 0.75
+  }
+ },
+ "rango_prediccion_por_vaca": {
+  "min": 2.2349785167003495,
+  "max": 3.696395982468688,
+  "p05": 2.5729222812513237,
+  "p95": 3.5157436633963455
+ },
+ "mae_por_vaca_promedio_repeticiones": 0.19893768618111002
+}

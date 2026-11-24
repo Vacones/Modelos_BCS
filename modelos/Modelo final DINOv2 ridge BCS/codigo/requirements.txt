@@ -13,10 +13,10 @@ pillow==13.0.0
 matplotlib==3.11.2
 ultralytics==8.4.211
 
-# Para predecir basta con CPU. La version CPU de torch se instala con:
+# Para predecir basta con CPU. La versión CPU de torch se instala con:
 #   pip install torch==2.15.0 torchvision==0.29.2 --index-url https://download.pytorch.org/whl/cpu
 #
 # Para reentrenar el detector (entrenar_detector.py) usamos un entorno aparte con GPU NVIDIA:
 #   torch==2.14.1+cu130 y torchvision==0.29.1+cu130 (https://download.pytorch.org/whl/cu130)
 #   ultralytics==8.4.211
-# Sin GPU tambien funciona, pero tarda varias horas.
+# Sin GPU también funciona, pero tarda varias horas.

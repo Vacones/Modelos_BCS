@@ -1,8 +1,9 @@
-﻿"""Train the final CAETEC BCS model: DINOv2-S features + ridge (alpha fixed) on all cows,
-linear calibration and thin-cow threshold from GroupKFold 5x10 out-of-fold per-cow predictions.
+"""Entrena el modelo final con todas las vacas: características de DINOv2-S y ridge con alfa fijo.
+La calibración lineal y el umbral de la alerta de vaca flaca salen de las predicciones por vaca
+fuera de pliegue de GroupKFold 5x10.
 
-Usage: python entrenar_final.py DATA_YOLO META_CSV PESOS_DINOV2 [ALPHA]
-Writes into ..\modelo: cabeza.joblib, config.json, oof_metricas.json, HUELLAS.txt
+Uso: python entrenar_final.py DATOS_YOLO METADATA_CSV PESOS_DINOV2 [ALFA]
+Escribe en ../modelo: cabeza.joblib, config.json y oof_metricas.json.
 """
 import sys, os, json, hashlib, platform, datetime
 import numpy as np, pandas as pd, joblib, torch, timm, sklearn
@@ -13,8 +14,7 @@ from sklearn.linear_model import Ridge
 from sklearn.pipeline import make_pipeline
 import bcs_comun as C
 
-AQUI = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "modelo")  # outputs go to ..\modelo
-ALIAS = {"2107": "1548"}  # possibly the same animal -> same CV group
+AQUI = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "modelo")  # las salidas van a ../modelo
 SPLIT_DIR = {"train": "train", "val": "valid", "test": "test"}
 N_SPLITS, N_REP = 5, 10
 
@@ -40,11 +40,11 @@ def main():
             crops.append(C.recortar(Image.open(os.path.join(d, "images", r.file_name)).convert("RGB"), sel[1])); keep.append(i)
     meta = meta.loc[keep].reset_index(drop=True)
     X = C.features(C.cargar_dinov2(pesos), crops); y = meta.bcs.values.astype(float)
-    g = meta.cow_id.map(lambda c: ALIAS.get(c, c)).values
+    g = meta.cow_id.values
     cows = np.unique(g); yc = pd.Series(y).groupby(g).first().reindex(cows).values
     nueva = lambda: make_pipeline(StandardScaler(), Ridge(alpha=alpha))
 
-    # out-of-fold per-cow predictions, averaged over the 10 repeats
+    # predicciones por vaca fuera de pliegue en cada una de las 10 repeticiones
     P = np.zeros((N_REP, len(cows)))
     for r in range(N_REP):
         p = np.zeros(len(y))
@@ -52,15 +52,15 @@ def main():
             p[te] = nueva().fit(X[tr], y[tr]).predict(X[te])
         P[r] = pd.Series(p).groupby(g).mean().reindex(cows).values
     pc = P.mean(0)
-    # calibration y ~ a*pred + b on per-cow OOF predictions of each single repeat (stacked), since the
-    # deployed model is one model, not an average of 10 (averaging repeats would shrink spread and inflate a)
+    # calibración y = a * pred + b sobre las predicciones de cada repetición apiladas. El modelo que se usa
+    # es uno solo y no un promedio de 10, y promediar repeticiones encogería la dispersión e inflaría a
     a, b = np.polyfit(P.ravel(), np.tile(yc, N_REP), 1)
-    pcal_rep = a * P + b  # used for the alert threshold: pooled over repeats
-    # per-repeat metrics (each repeat is an honest OOF pass), then averaged
+    pcal_rep = a * P + b  # para el umbral de la alerta, con todas las repeticiones juntas
+    # métricas por repetición, cada una es una pasada completa fuera de pliegue, y luego su promedio
     rep_raw = pd.DataFrame([metricas(P[r], yc) for r in range(N_REP)]).mean().to_dict()
     rep_cal = pd.DataFrame([metricas(a * P[r] + b, yc) for r in range(N_REP)]).mean().to_dict()
 
-    # thin-cow alert: flag pred_cal <= T; choose the T with best specificity among those with sensitivity >= 0.8
+    # alerta de vaca flaca: pred_cal <= T. Se elige el T con mejor especificidad entre los de sensibilidad >= 0.8
     flaca = np.tile(yc <= 2.75, N_REP); cand = []
     for T in np.arange(2.60, 3.21, 0.01):
         al = pcal_rep.ravel() <= T + 1e-9
@@ -73,7 +73,7 @@ def main():
     joblib.dump(final, os.path.join(AQUI, "cabeza.joblib"))
     cfg = {"creado": datetime.date.today().isoformat(),
            "backbone": "timm vit_small_patch14_dinov2.lvd142m (DINOv2 ViT-S/14), congelado",
-           "pesos_backbone": "pesos\\dinov2_vits14.safetensors",
+           "pesos_backbone": "pesos/dinov2_vits14.safetensors",
            "entrada": {"recorte": "caja 'ass' (grupa) dentro de la caja 'cow' de mayor confianza, margen 10%", "margen": C.MARGEN,
                        "tamano": C.SIZE, "normalizacion": {"mean": C.MEAN, "std": C.STD}, "redimension": "bicubica a 224x224"},
            "features": "concat(token CLS, media de tokens de parche) = 768, promedio con la imagen espejada (flip TTA)",
@@ -90,8 +90,8 @@ def main():
     json.dump(cfg, open(os.path.join(AQUI, "config.json"), "w", encoding="utf-8"), indent=1, ensure_ascii=False)
     res = {"protocolo": "GroupKFold por vaca 5x10, alpha fijo; metricas por vaca promediadas sobre las 10 repeticiones",
            "sin_calibrar": rep_raw, "calibrado": rep_cal,
-           "nota_calibrado": "a y b se ajustaron sobre estas mismas predicciones OOF: las metricas calibradas son algo optimistas. "
-                             "La estimacion anidada honesta (evaluar_externos.py, config e_ridge_calib) fue MAE 0.205.",
+           "nota_calibrado": "a y b se ajustaron sobre estas mismas predicciones fuera de pliegue, por eso las métricas calibradas "
+                             "son algo optimistas. La estimación anidada (evaluar_externos.py, config e_ridge_calib) fue MAE 0.205.",
            "alerta_flaca": {"umbral": T, "sensibilidad": sens, "especificidad": spec, "n_flacas": int((yc <= 2.75).sum()),
                             "curva": [c for c in cand if c[0] in np.round(np.arange(2.7, 3.11, 0.05), 2)]}}
     json.dump(res, open(os.path.join(AQUI, "oof_metricas.json"), "w"), indent=1)
