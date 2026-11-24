@@ -1,92 +1,92 @@
 # BCS con DINOv2 + LDL para Mac Apple Silicon
 
-Implementación alternativa del área `con_cajas_yolo`: YOLO localiza vaca y grupa; DINOv2 congelado procesa dos vistas de la grupa; una cabeza LDL estima BCS continuo y categoría. Incluye preparación de datos, entrenamiento, checkpoints, evaluación y diagnóstico visual por oclusión.
+Esta es una variante del área `con_cajas_yolo`. YOLO localiza la vaca y la grupa, DINOv2 congelado procesa dos vistas de la grupa y una cabeza LDL estima el BCS continuo y la categoría. La carpeta incluye preparación de datos, entrenamiento, checkpoints, evaluación y mapas de sensibilidad por oclusión.
 
-Esta carpeta publica código, pruebas con datos ficticios y documentación. Los datos autorizados, anotaciones, regiones manuales, checkpoints y resultados se proporcionan y conservan localmente. No adjuntarlos a commits, Pull Requests ni Releases.
+Aquí solo hay código, pruebas con datos ficticios y documentación. Los datos, las anotaciones, las regiones marcadas a mano, los checkpoints y los resultados se guardan en cada equipo y no se suben a commits, Pull Requests ni Releases.
 
 ## Arquitectura
 
-| Componente | Función | Dispositivo previsto |
+| Componente | Función | Dispositivo |
 |---|---|---|
 | YOLO | Detectar `cow` y `ass` y exigir un par único | PyTorch/MPS, GPU Apple |
-| Preparación | Recortar la grupa y rellenar a 224×224 sin estirar | CPU |
-| DINOv2 ViT-S/14 congelado | Extraer CLS y media de parches de cada vista | PyTorch/MPS, GPU Apple |
-| Cabeza LDL | LayerNorm, Dense128, GELU, Dropout0.30 y DenseK | TensorFlow/Metal, GPU Apple durante entrenamiento |
-| Evaluación de la cabeza | Obtener distribución, esperanza y categoría | CPU; evita competir con DINOv2 por Metal |
+| Preparación | Recortar la grupa y rellenar a 224 × 224 sin estirar | CPU |
+| DINOv2 ViT-S/14 congelado | Extraer el CLS y la media de parches de cada vista | PyTorch/MPS, GPU Apple |
+| Cabeza LDL | LayerNorm, Dense 128, GELU, Dropout 0.30 y Dense K | TensorFlow/Metal, GPU Apple al entrenar |
+| Evaluación de la cabeza | Obtener distribución, esperanza y categoría | CPU, para no competir con DINOv2 por Metal |
 
-La primera vista conserva toda la grupa. La segunda usa por defecto el 65% superior del recorte preparado (`[0,0,1,0.65]`). Es una aproximación geométrica revisable, no un detector de huesos. El modo manual exige ROIs por imagen; el modo `full` desactiva la segunda rama para estudiar su aporte.
+La primera vista es la grupa completa. La segunda es por defecto el 65 % superior del recorte (`[0,0,1,0.65]`), que es una aproximación geométrica de la zona de cadera y sacro y no un detector de huesos. Con el modo manual se marcan las regiones a mano en cada imagen, y con el modo `full` se apaga la segunda vista para medir cuánto aporta.
 
-Cada vista produce CLS384 + promedio de parches384. La cabeza recibe1536 características, normalizadas con estadísticas de originales de train. DINOv2 permanece congelado y en modo evaluación. No se convierte su implementación oficial a TensorFlow: el componente entrenable que estima BCS sí se implementa en TensorFlow.
+Cada vista da el token CLS (384 valores) y el promedio de parches (384 valores), así que la cabeza recibe 1536 características, normalizadas con las estadísticas de las fotos originales de train. DINOv2 queda congelado en modo evaluación y se usa en PyTorch con su implementación oficial. La parte entrenable que estima el BCS está en TensorFlow.
 
 ## 1. Instalación
 
-Requiere macOS/Apple Silicon, Terminal sin Rosetta y Python3.11o3.12 ARM64. Instalar Xcode Command Line Tools si no están disponibles (`xcode-select --install`). Desde la raíz del repositorio:
+Se necesita macOS con Apple Silicon, Terminal sin Rosetta y Python 3.11 o 3.12 ARM64. Si faltan las Xcode Command Line Tools, se instalan con `xcode-select --install`. Desde la raíz del repositorio:
 
 ```bash
 cd modelos/con_cajas_yolo/dinov2_ldl_mac
 bash instalar_mac.sh
 ```
 
-El instalador crea `.venv-mac`, fija PyTorch2.9.1/torchvision0.24.1, TensorFlow2.18.1/tensorflow-metal1.2.0/Keras3.8.0 y NumPy2.0.2, ejecuta `pip check` y comprueba ambas rutas GPU con operaciones reales y DINOv2. Para otra ubicación de Python compatible:
+El instalador crea `.venv-mac`, fija PyTorch 2.9.1, torchvision 0.24.1, TensorFlow 2.18.1, tensorflow-metal 1.2.0, Keras 3.8.0 y NumPy 2.0.2, corre `pip check` y comprueba que MPS y Metal funcionen con operaciones reales y con DINOv2. Para usar otro Python compatible:
 
 ```bash
 PYTHON_BIN=/ruta/a/python3.12 bash instalar_mac.sh
 ```
 
-Los pesos públicos se descargan al primer uso. No se instala CUDA ni se necesita WSL. El instalador y ejecutor configuran un bundle CA de certifi para `urllib`/`torch.hub` y Requests; no desactivan la verificación HTTPS. Si Python.org presenta problemas de certificados durante pip, ejecutar el `Install Certificates.command` de esa instalación de Python.
+Los pesos públicos de DINOv2 se descargan la primera vez. No hace falta CUDA ni WSL. El instalador usa los certificados de certifi para las descargas y no desactiva la verificación HTTPS. Si el Python de python.org da errores de certificados con pip, hay que correr el `Install Certificates.command` de esa instalación.
 
-La detección efectiva de MPS/Metal se comprueba en el equipo. Si no hay GPU se produce un error visible; para pruebas CPU explícitas existen comandos individuales con `--device cpu`. No se promete un factor de aceleración: redes pequeñas y lotes pequeños pueden no amortizar el sobrecosto de GPU.
+Si el equipo no tiene MPS o Metal, el ejecutor se detiene con un error. Para pruebas en CPU, los comandos individuales aceptan `--device cpu`. Con redes y lotes pequeños la GPU no siempre es más rápida.
 
-## 2. Datos externos
+## 2. Datos
 
-Proporcionar un dataset autorizado FUERA del checkout y sustituir `/ruta/datos_autorizados/dataset_yolo` en los ejemplos. No cambiar las particiones existentes para mejorar métricas.
+El dataset va fuera del repositorio. En los ejemplos hay que cambiar `/ruta/datos_autorizados/dataset_yolo` por su ubicación. Las particiones se dejan como están.
 
-| Ruta dentro del dataset externo | Contenido |
+| Ruta dentro del dataset | Contenido |
 |---|---|
 | `images/train`, `images/val`, `images/test` | Fotografías |
-| `labels/train`, `labels/val`, `labels/test` | Cajas YOLO, 0=cow y 1=ass |
+| `labels/train`, `labels/val`, `labels/test` | Cajas YOLO, 0 = cow y 1 = ass |
 | `metadata.csv` | Identidad, BCS, estado y tags |
 | `data.yaml` | Clases del detector |
-| `coco_original/train/_annotations.coco.json` | COCO original train |
-| `coco_original/valid/_annotations.coco.json` | COCO original validación |
-| `coco_original/test/_annotations.coco.json` | COCO original test |
+| `coco_original/train/_annotations.coco.json` | COCO original de train |
+| `coco_original/valid/_annotations.coco.json` | COCO original de validación |
+| `coco_original/test/_annotations.coco.json` | COCO original de test |
 
-También admite el COCO original con fotografías y JSON en `train/valid/test`. Los tags de imagen esperados contienen identidad numérica y `BCS_3_0` o formato equivalente. Las muestras ambiguas se excluyen de BCS y se conservan para detección. El catálogo se deriva de train y requiere categorías consecutivas cada0.25BCS.
+También acepta el COCO original con fotos y JSON en `train/valid/test`. Los tags de cada imagen deben tener la identidad numérica y `BCS_3_0` o un formato equivalente. Las fotos con BCS ambiguo no entran al modelo BCS pero sí al detector. El catálogo de clases sale de train y debe tener categorías consecutivas cada 0.25 BCS.
 
-El ETL comprueba geometría y correspondencia COCO/YOLO/metadatos; rechaza identidades y hashes exactos compartidos entre particiones. No detecta por sí solo IDs mal anotados ni todas las fotos casi duplicadas. Las identidades no se entregan como características al modelo.
+El ETL revisa la geometría y que COCO, YOLO y metadatos coincidan, y rechaza identidades o fotos idénticas repetidas entre particiones. No detecta IDs mal anotados ni todas las fotos casi duplicadas. Las identidades no entran como características al modelo.
 
 ## 3. Ejecutar el flujo completo
 
-Antes de entrenar con el COCO original `train/valid/test`, ejecutar esta comprobación desde esta carpeta, después de `instalar_mac.sh`:
+Antes de entrenar con el COCO original se corre una comprobación desde esta carpeta, después de `instalar_mac.sh`:
 
 ```bash
-mkdir -p "$HOME/Desktop/vacones_reg/resultados_dino"
-RUN_DESTINO="$HOME/Desktop/vacones_reg/resultados_dino/comparacion_dino_01"
+mkdir -p /ruta/privada/resultados_dino
+RUN_DESTINO="/ruta/privada/resultados_dino/corrida_01"
 .venv-mac/bin/python preflight.py \
-  --datos "$HOME/Desktop/vacones_reg/datos/coco_cajas_v2_aprobado" \
+  --datos /ruta/datos_autorizados/coco_cajas_v2_aprobado \
   --salida "$RUN_DESTINO"
 ```
 
-Comprueba macOS ARM64, Python y dependencias instaladas, la presencia de las imágenes de `train` y `valid`, las clases `cow`/`ass` y que esa ruta de salida no exista. No crea la salida, no lee `test` y no entrena. Si falla por dependencias, usar `bash instalar_mac.sh` en vez de instalar paquetes sueltos en otro entorno.
+Revisa macOS ARM64, Python, las dependencias, que existan las imágenes de `train` y `valid`, las clases `cow` y `ass`, y que la carpeta de salida todavía no exista. No crea nada, no lee `test` y no entrena. Si falla por dependencias, se vuelve a correr `bash instalar_mac.sh` en lugar de instalar paquetes sueltos.
 
-Para usar **esa misma ruta** en la corrida nueva, una vez aprobado el preflight:
+Si la comprobación pasa, la corrida usa esa misma carpeta:
 
 ```bash
 env RUN_DESTINO="$RUN_DESTINO" caffeinate -i bash ejecutar_mac.sh \
-  "$HOME/Desktop/vacones_reg/datos/coco_cajas_v2_aprobado"
+  /ruta/datos_autorizados/coco_cajas_v2_aprobado
 ```
 
-El ejecutor repite el preflight antes de crear `RUN_DESTINO` fuera del repositorio; si la carpeta ya existe, se detiene sin sobrescribirla. Luego comprueba GPU, prepara datos, entrena la cabeza LDL y, si no se indica un detector privado como segundo argumento, entrena un detector nuevo. El comportamiento anterior, con un directorio aleatorio en `runs/`, se conserva si no se define `RUN_DESTINO`.
+El ejecutor repite la comprobación y se detiene si `RUN_DESTINO` ya existe, para no sobrescribir otra corrida. Luego comprueba la GPU, prepara los datos, entrena la cabeza LDL y entrena un detector nuevo si no se le pasa uno como segundo argumento. Si no se define `RUN_DESTINO`, crea una carpeta nueva dentro de `runs/` y guarda su ruta en `ULTIMA_EJECUCION.txt`. Todo lo que está en `runs/` es privado y Git lo ignora.
 
-Al terminar, revisar `"$RUN_DESTINO/FINALIZADO.txt"`, `"$RUN_DESTINO/val_gt/resumen.md"`, `"$RUN_DESTINO/val_pipeline/resumen.md"`, `"$RUN_DESTINO/val_pipeline/metricas.json"`, `"$RUN_DESTINO/val_pipeline/predicciones.csv"` y `"$RUN_DESTINO/val_pipeline/por_vaca.csv"`. Confirmar que hay 36 fotos de validación elegibles, registrar cobertura/abstenciones y conservar el directorio completo en privado. Si falta `FINALIZADO.txt`, revisar `"$RUN_DESTINO/ejecucion.log"`; no interpretar una corrida parcial como evaluación final. El ejecutor no evalúa `test`.
+Al terminar hay que revisar dentro de `RUN_DESTINO` los archivos `FINALIZADO.txt`, `val_gt/resumen.md`, `val_pipeline/resumen.md`, `val_pipeline/metricas.json`, `val_pipeline/predicciones.csv` y `val_pipeline/por_vaca.csv`, confirmar que hay 36 fotos de validación elegibles y anotar la cobertura y las abstenciones. Si falta `FINALIZADO.txt`, la corrida no terminó y el error está en `ejecucion.log`. El ejecutor nunca evalúa `test`.
 
-Sin detector privado disponible, entrena uno nuevo a partir de los pesos públicos y las cajas externas:
+Sin `RUN_DESTINO` y sin detector previo, basta con:
 
 ```bash
 caffeinate -i bash ejecutar_mac.sh /ruta/datos_autorizados/dataset_yolo
 ```
 
-Si existe un detector revisado, reutilizarlo:
+Para reutilizar un detector ya entrenado:
 
 ```bash
 caffeinate -i bash ejecutar_mac.sh \
@@ -94,24 +94,22 @@ caffeinate -i bash ejecutar_mac.sh \
   /ruta/modelos_privados/detector/weights/best.pt
 ```
 
-Opcionalmente añadir como tercer argumento un CSV privado del notebook previo con `clave,real,estado,caja_predicha`, para reconstruir sus recortes exactos. Las cajas anotadas del dataset son etiquetas, no sustituyen el `best.pt` entrenado.
+Como tercer argumento opcional se puede pasar un CSV del notebook anterior con `clave,real,estado,caja_predicha` para reconstruir exactamente sus recortes. Las cajas anotadas del dataset no sustituyen al `best.pt` entrenado.
 
-Orden: comprobar GPU, ETL/EDA, características train/val, entrenar LDL, evaluar con cajas anotadas, entrenar YOLO si hace falta, recortes predichos, evaluación end-to-end, mapas y comparaciones opcionales.
-
-Cada ejecución crea un directorio nuevo en `runs/` y un puntero local `ULTIMA_EJECUCION.txt`. Las salidas son privadas y están ignoradas por Git. No se evalúa test en el ejecutor; EDA describe las particiones existentes. No mover datos/carpeta de trabajo tras ETL, porque el manifiesto conserva rutas absolutas.
+Las etapas van en este orden: comprobar la GPU, ETL y EDA, características de train y val, entrenar LDL, evaluar con cajas anotadas, entrenar YOLO si hace falta, recortes predichos, evaluación del sistema completo, mapas de oclusión y comparaciones opcionales. Después del ETL no se deben mover los datos ni la carpeta de trabajo, porque el manifiesto guarda rutas absolutas.
 
 ## 4. Entrenamiento LDL
 
-- Distribución objetivo gaussiana discreta, centrada en la anotación; sigma inicial0.125BCS. Es una hipótesis de suavizado, no incertidumbre medida de anotadores.
-- Pérdida: entropía cruzada suave +0.5× promedio de diferencias cuadráticas entre CDF, sobre los primeros K−1 límites.
-- AdamW lr0.001, decay0.0001, lote32, máximo100épocas, paciencia15.
-- Ponderación inversa al número de fotos/vistas por animal: cada vaca aporta el mismo peso total a la pérdida. No hay sobremuestreo por clase.
-- Selección por MAE CONTINUO de validación; no por test. MAE train/val se reporta por foto.
-- Una vista por muestra, sin aumentos, en la primera ejecución. `features --views 4` permite estudiar aumentos solamente en train; al voltear transforma también la ROI.
+- La distribución objetivo es una gaussiana discreta centrada en la etiqueta, con sigma 0.125 BCS. Es un suavizado que elegimos y no una medida de la diferencia entre evaluadores.
+- La pérdida es entropía cruzada suave más 0.5 × el promedio de las diferencias cuadráticas entre las CDF, sobre los primeros K−1 límites.
+- AdamW con lr 0.001, weight decay 0.0001, lote de 32, máximo 100 épocas y paciencia de 15.
+- Cada foto pesa el inverso del número de fotos de su vaca, para que cada vaca aporte lo mismo a la pérdida. No hay sobremuestreo por clase.
+- El checkpoint se elige por el MAE continuo de validación, nunca por test. El MAE de train y val se reporta por foto.
+- La primera corrida usa una vista por muestra y sin aumentos. `features --views 4` permite probar aumentos solo en train, y al voltear la foto también voltea la ROI.
 
-La salida continua es la esperanza de la distribución BCS. La categoría es el valor del catálogo más cercano a esa esperanza (empates al menor), no argmax. Los scores no están calibrados. Cambiar backend, inicialización o detector impide atribuir toda diferencia a una sola parte de la arquitectura.
+La salida continua es la esperanza de la distribución BCS. La categoría es el valor del catálogo más cercano a esa esperanza (en un empate, el menor) y no el argmax. Los scores no están calibrados. Si se cambia el backend, la inicialización o el detector, una diferencia en los resultados ya no se puede atribuir a una sola parte.
 
-## 5. Métricas y comparación con un baseline externo
+## 5. Métricas y comparación con otro modelo
 
 ```bash
 RUN=$(cat ULTIMA_EJECUCION.txt)
@@ -119,11 +117,11 @@ cat "$RUN/val_gt/resumen.md"
 cat "$RUN/val_pipeline/resumen.md"
 ```
 
-La clave `continuous_bcs` de `metricas.json` contiene las métricas continuas; el nivel superior contiene métricas por categoría. Se informa cobertura, abstenciones, MAE/RMSE entre clasificadas, tolerancias±0.25/±0.50 sobre clasificadas y sobre todas las elegibles, F1/kappa por categoría y mediana constante de train como baseline. En métricas globales las abstenciones cuentan como no aciertos. Las proporciones se multiplican por100 para porcentajes.
+En `metricas.json`, la clave `continuous_bcs` tiene las métricas continuas y el nivel superior las de categoría. Se reportan la cobertura, las abstenciones, el MAE y el RMSE de las fotos clasificadas, las tolerancias ±0.25 y ±0.50 sobre las clasificadas y sobre todas las elegibles, F1 y kappa por categoría, y la mediana de train como referencia constante. En las métricas globales una abstención cuenta como fallo. Las proporciones se multiplican por 100.
 
-Las comparaciones pareadas usan categorías en ambos modelos. No comparar MAE continuo de uno con MAE redondeado del otro como si fueran el mismo criterio. La coincidencia de estados no demuestra coincidencia de píxeles; conservar detector y coordenadas para aislar el clasificador. Con detector nuevo, informar ese cambio junto a la comparación end-to-end y revisar por separado las cajas anotadas.
+Las comparaciones pareadas usan categorías en los dos modelos, porque comparar el MAE continuo de uno con el MAE redondeado del otro no sería justo. Que dos modelos se abstengan en las mismas fotos no garantiza que vean los mismos píxeles, así que para aislar el clasificador hay que conservar el detector y las coordenadas. Si se entrena un detector nuevo, se indica junto a la comparación del sistema completo y las cajas anotadas se revisan por separado.
 
-El repositorio NO incorpora referencias con predicciones reales por imagen. El usuario proporciona localmente los CSV de baseline con `split,file_name,true_bcs,pred_bcs,status`; los IDs se vinculan desde su manifiesto privado. Por ejemplo:
+El repositorio no trae predicciones reales. Para comparar, cada integrante usa su propio CSV con `split,file_name,true_bcs,pred_bcs,status`, y los IDs se toman de su manifiesto privado. Por ejemplo:
 
 ```bash
 .venv-mac/bin/python comparar.py \
@@ -132,13 +130,13 @@ El repositorio NO incorpora referencias con predicciones reales por imagen. El u
   --work "$RUN/datos" --out "$RUN/comparacion_gt_manual"
 ```
 
-Para activar comparación automática en una nueva ejecución, definir `BASELINE_GT_CSV` y/o `BASELINE_PIPELINE_CSV` con rutas privadas externas antes de `ejecutar_mac.sh`. Si no se proporcionan, se omite la comparación y se conservan las métricas del modelo nuevo.
+Para que el ejecutor haga la comparación solo, se definen `BASELINE_GT_CSV` o `BASELINE_PIPELINE_CSV` con rutas fuera del repositorio antes de correr `ejecutar_mac.sh`. Si no se definen, se omite la comparación y se guardan solo las métricas de este modelo.
 
-Bootstrap por vaca: exploratorio, sin corregir selección repetida por validación. Si test ya informó decisiones, una confirmación independiente requiere nuevos animales. No se publican resultados científicos privados ni se afirma superioridad general de esta arquitectura.
+El bootstrap por vaca es exploratorio y no corrige que la validación se haya usado para elegir el modelo. Si test ya se usó para decidir algo, sus cifras dejan de ser una prueba independiente.
 
 ## 6. Regiones anatómicas y diagnóstico visual
 
-El 65% superior es solo una aproximación: puede incluir relleno o perder anatomía con un ángulo distinto. Para revisión/marcado local:
+El 65 % superior es solo una aproximación y puede incluir relleno o perder parte de la anatomía si cambia el ángulo. Para revisar o marcar regiones a mano:
 
 ```bash
 PY=.venv-mac/bin/python
@@ -148,17 +146,17 @@ $PY pipeline.py features --work runs/manual/datos --out runs/manual/features \
   --roi-mode manual --roi-csv runs/manual/rois.csv --splits train val --device mps
 ```
 
-Arrastrar región visible de pelvis/sacro/base de cola; Enter guarda, Q/cerrar termina. El editor no muestra BCS. CSV: `key,x1,y1,x2,y2`, coordenadas normalizadas sobre el recorte224×224 con relleno. Para continuar un CSV parcial usar otro `--out` y `--from-csv` con el previo.
+En el editor se arrastra la región visible de pelvis, sacro y base de la cola. Enter guarda, y Q o cerrar la ventana termina. El editor no muestra el BCS. El CSV tiene `key,x1,y1,x2,y2` con coordenadas normalizadas sobre el recorte de 224 × 224 con relleno. Para continuar un CSV a medias se usa otro `--out` y `--from-csv` con el anterior.
 
-Claves anotadas: `annotated/train/archivo.jpg`; para recortes de YOLO: `predicted/val/archivo.jpg`. Marcar cada geometría por separado: no reutilizar ciegamente las coordenadas si cambiaron las cajas. El modo manual exige anotaciones completas y también una ROI humana para fotos nuevas; no entrena un localizador anatómico automático.
+Las claves de las cajas anotadas son `annotated/train/archivo.jpg` y las de los recortes de YOLO `predicted/val/archivo.jpg`. Cada geometría se marca por separado, porque si cambian las cajas las coordenadas anteriores ya no sirven. El modo manual necesita todas las anotaciones y también una ROI marcada para cada foto nueva, porque no entrena un localizador automático.
 
-Para comparar la vista adicional, crear otro experimento con `ROI_MODE=full`, mismos datos, detector y ajustes. La rama adicional queda a cero. No escoger regiones ni hiperparámetros por test.
+Para medir cuánto aporta la segunda vista se crea otro experimento con `ROI_MODE=full` y los mismos datos, detector y ajustes. En ese caso la rama adicional queda en cero. Las regiones y los hiperparámetros nunca se eligen con test.
 
-El ejecutor genera `explicaciones_val/*.png`: original, grupa/ROI, mapa de sensibilidad y probabilidades. Oculta cada celda7×7 con el promedio RGB, recalcula ambas vistas y mide el cambio absoluto de BCS continuo. Los JSON conservan signo, escala y pruebas ocultando ROI/exterior. Los mapas no se normalizan a máximo1; leer sus barras, no solo brillo.
+El ejecutor genera `explicaciones_val/*.png` con la foto original, la grupa con su ROI, el mapa de sensibilidad y las probabilidades. Para cada celda de una cuadrícula de 7 × 7 tapa esa zona con el color promedio, vuelve a calcular las dos vistas y mide cuánto cambia el BCS continuo. Los JSON guardan el signo, la escala y pruebas tapando la ROI y el exterior. Los mapas no se normalizan a un máximo de 1, así que hay que leer sus barras y no solo el brillo.
 
-No son atención, Grad-CAM ni detección de huesos. Las oclusiones crean imágenes artificiales y sus áreas difieren: sensibilidad no demuestra causalidad anatómica, y un cambio pequeño no prueba irrelevancia por redundancia o saturación. Las abstenciones no tienen una estimación que explicar.
+Estos mapas no son atención ni Grad-CAM y no detectan huesos. Tapar una zona crea una imagen artificial, así que una zona sensible no prueba que esa parte del cuerpo sea la causa, y un cambio pequeño tampoco prueba que la zona no importe. Las fotos donde el modelo se abstuvo no tienen mapa.
 
-`EXPLAIN_LIMIT=6` limita fotos del diagnóstico inicial. `pipeline.py explain --grid 4 --limit 6` reduce resolución/cantidad; no modifica las métricas de evaluación. Entrenar un localizador anatómico futuro requiere etiquetas adicionales y otra validación.
+`EXPLAIN_LIMIT=6` limita cuántas fotos se explican. `pipeline.py explain --grid 4 --limit 6` reduce la resolución y la cantidad sin cambiar las métricas de evaluación.
 
 ## 7. Checkpoints e interrupciones
 
@@ -168,11 +166,11 @@ RUN=$(cat ULTIMA_EJECUCION.txt)
   --run "$RUN/modelo_ldl_tf" --epochs 100 --patience 15 --device mps --resume
 ```
 
-`estado.json` apunta a último y mejor modelo completos `.keras`; incluye historia y estado de paciencia. El optimizador se recupera del último modelo. La normalización se conserva en `normalizacion.npz`. Mantener los mismos parámetros/caché; se permite ampliar el total de épocas. La paciencia alcanzada se respeta; no se garantiza identidad bit a bit del RNG con una corrida ininterrumpida ni entre dispositivos.
+`estado.json` apunta al último y al mejor modelo `.keras` completos, con la historia y el estado de la paciencia. El optimizador se recupera del último modelo y la normalización se guarda en `normalizacion.npz`. Al reanudar hay que usar los mismos parámetros y la misma caché, aunque se puede subir el total de épocas. La paciencia alcanzada se respeta. El resultado puede no ser idéntico al de una corrida sin interrupciones, ni entre equipos distintos.
 
-El modelo de cada generación se escribe antes del puntero atómico. Solo se conservan último y mejor; una interrupción puede dejar un archivo huérfano sin invalidar el estado previo. No editar estado.json ni borrar el directorio al reanudar.
+Cada modelo se escribe antes de actualizar `estado.json`, y solo se guardan el último y el mejor. Si se interrumpe, puede quedar un archivo suelto sin que se dañe el estado anterior. No hay que editar `estado.json` ni borrar la carpeta al reanudar.
 
-Extracción: no hay reanudación parcial; repetir con otra salida. YOLO: usar `detector-train --resume /ruta/last.pt` conservando trabajo y dispositivo. Para fallos posteriores repetir solo la etapa pendiente; relanzar el ejecutor crea otra corrida. Para memoria insuficiente reducir lotes a1o2 en una corrida nueva. Las dos vistas se procesan secuencialmente.
+La extracción de características no se puede reanudar a medias y se repite con otra salida. YOLO se reanuda con `detector-train --resume /ruta/last.pt` y el mismo trabajo y dispositivo. Si falla una etapa posterior, se repite solo esa etapa, porque volver a lanzar el ejecutor crea otra corrida. Si falta memoria, se bajan los lotes a 1 o 2 en una corrida nueva. Las dos vistas se procesan una después de la otra.
 
 ## 8. Foto nueva
 
@@ -184,9 +182,9 @@ Extracción: no hay reanudación parcial; repetir con otra salida. YOLO: usar `d
   --out runs/foto_nueva --device mps
 ```
 
-Guarda detecciones, recorte, ROI, BCS continuo y categoría. No identifica al animal ni estima BCS sin un par único. Si se entrenó con ROI manual, añadir `--roi x1 y1 x2 y2`. Los modelos son prototipos académicos y no sustituyen evaluación veterinaria.
+Guarda las detecciones, el recorte, la ROI, el BCS continuo y la categoría. No identifica al animal y no estima el BCS si no encuentra un único par de vaca y grupa. Si se entrenó con ROI manual, hay que agregar `--roi x1 y1 x2 y2`. Es un prototipo académico y no sustituye la evaluación del veterinario.
 
-## 9. Pruebas y publicación
+## 9. Pruebas
 
 Desde esta carpeta, con las dependencias instaladas:
 
@@ -196,9 +194,9 @@ Desde esta carpeta, con las dependencias instaladas:
 bash -n instalar_mac.sh ejecutar_mac.sh
 ```
 
-Las pruebas unitarias usan datos ficticios temporales: fórmula LDL contrastada con NumPy, gradientes, serialización del modelo/optimizador, ETL, reanudación, métricas, abstenciones, oclusión y comparación pareada. El smoke test descarga DINOv2 público y conecta extractor real, cabeza TensorFlow y oclusión en CPU. Ninguna prueba constituye precisión científica de BCS ni valida Metal por sí sola. El comprobador GPU del instalador se ejecuta separadamente en el equipo destino.
+Las pruebas unitarias usan datos ficticios temporales y cubren la fórmula LDL contra NumPy, los gradientes, guardar y cargar el modelo con su optimizador, el ETL, la reanudación, las métricas, las abstenciones, la oclusión y la comparación pareada. `smoke_dino_tf.py` descarga DINOv2 y conecta el extractor real, la cabeza de TensorFlow y la oclusión en CPU. Estas pruebas revisan que el código funcione, pero no miden la precisión del modelo ni comprueban Metal. La GPU la comprueba el instalador en cada Mac.
 
-Ver [VALIDACION.md](VALIDACION.md). Contribuir mediante rama del área y PR, conforme a [CONTRIBUTING.md](../../../CONTRIBUTING.md). Excluir también `.keras`, `.npz`, `.npy`, `runs/` y referencias privadas al preparar commits: las salidas pueden contener identificadores reales.
+Más detalle en [VALIDACION.md](VALIDACION.md). Para contribuir se usa una rama del área y un Pull Request, como indica [CONTRIBUTING.md](../../../CONTRIBUTING.md). Además de los datos, no se suben archivos `.keras`, `.npz`, `.npy` ni la carpeta `runs/`, porque las salidas pueden tener identificadores reales.
 
 ## Fuentes técnicas
 

@@ -18,7 +18,7 @@ cd modelos/sin_cajas_resnet
 - Separación de entrenamiento, validación y prueba por vaca.
 - Preprocesamiento con *letterbox* a 224 × 224, sin recorte central.
 - Selección del checkpoint mediante MAE de validación por vaca.
-- Ejecución en Apple MPS cuando está disponible; en otro caso utiliza CPU.
+- Ejecución en Apple MPS cuando está disponible y en CPU si no lo está.
 
 El proyecto es un baseline académico. Sus resultados no deben utilizarse para decisiones clínicas o productivas.
 
@@ -153,12 +153,12 @@ Las imágenes, el inventario y los reportes generados permanecen excluidos del r
 
 Antes de contribuir, confirme que el cambio no incluya:
 
-- fotografías o datasets;
-- identificadores reales de animales;
-- etiquetas, predicciones o particiones reales;
-- rutas locales, documentos académicos o datos personales;
-- tokens, credenciales o archivos `.env`;
-- checkpoints o resultados de experimentos.
+- Fotografías o datasets.
+- Identificadores reales de animales.
+- Etiquetas, predicciones o particiones reales.
+- Rutas locales, documentos académicos o datos personales.
+- Tokens, credenciales o archivos `.env`.
+- Checkpoints o resultados de experimentos.
 
 Revise siempre `git status` y `git diff --cached` antes de crear un commit.
 

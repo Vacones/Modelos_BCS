@@ -46,7 +46,7 @@ print("Keras", keras.__version__, "|", describir_equipo())
 #
 # Cambia solo esta celda. En `CARPETA` deben estar dos archivos:
 # - `Vacones BCS - Cajas v2 Aprobado.yolo26.zip`, el export de Roboflow (o la carpeta ya descomprimida).
-# - `metadata_bcs_validos.csv` de Jacob, que liga cada imagen con su vaca y su BCS.
+# - `metadata_bcs_validos.csv`, que liga cada imagen con su vaca y su BCS.
 #
 # Los resultados se guardan en `CARPETA/resultados_bcs_ordinal`, así sobreviven si Colab se desconecta.
 
@@ -122,7 +122,7 @@ def categoria3(bcs):
 # ## 2. Datos
 #
 # Lee las cajas de Roboflow por nombre de clase (`cow`, `ass`), así funciona igual con el export directo
-# (`ass` = 0) y con el VERIFICADO de Jacob (`cow` = 0).
+# (`ass` = 0) y con la copia VERIFICADO del Drive (`cow` = 0).
 
 # %% [code] Carga de datos
 def leer_clases(ruta_dataset):

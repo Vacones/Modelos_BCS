@@ -1,57 +1,21 @@
-# Comparación de modelos BCS
+# Comparación preliminar de modelos BCS
 
-Esta carpeta reunirá la comparación de los candidatos desarrollados en `modelos/` y servirá como base para la fase de evaluación de CRISP-DM. La comparación debe mostrar qué resultados son compatibles entre sí, qué limitaciones tienen y cómo responden a los objetivos de negocio del proyecto.
+Esta carpeta guarda la primera comparación que hicimos de los modelos del equipo, el 12 de noviembre de 2026. Juntamos las cifras de validación que ya tenía cada modelo, todas sobre las 36 fotos de las 10 vacas de validación, y volvimos a correr DINOv2 + LDL, EfficientNet de clasificación y CORAL con el mismo detector para que cubrieran las mismas fotos.
 
-## Estado
+No la usamos para elegir el modelo porque las cifras no eran comparables entre sí. Cada modelo medía con una unidad distinta (foto o vaca), unos usaban cajas anotadas y otros cajas del detector, y el detector dejaba sin predicción entre 6 y 12 de las 36 fotos. Con 8 a 10 vacas cubiertas cualquier diferencia quedaba dentro del ruido. Por eso volvimos a entrenar los seis enfoques con las mismas 66 vacas y los mismos pliegues en [`evaluacion/comparacion_validacion_cruzada`](../comparacion_validacion_cruzada/), que es la comparación con la que aprobamos el [modelo final](../../modelos/Modelo%20final%20DINOv2%20ridge%20BCS/).
 
-Esta carpeta conserva el corte preliminar con las validaciones originales de cada modelo, que usaban distintas unidades de análisis, fuentes de cajas y conjuntos de evaluación. La comparación final, con los seis enfoques reentrenados sobre las mismas 66 vacas y los mismos pliegues, está en [`evaluacion/comparacion_validacion_cruzada`](../comparacion_validacion_cruzada/). Con esa comparación aprobamos el modelo de [`modelos/Modelo final DINOv2 ridge BCS`](../../modelos/Modelo%20final%20DINOv2%20ridge%20BCS/) para el prototipo.
+![Cobertura y MAE por vaca en validación](figuras/cobertura_y_mae_vaca_val.png)
 
-## Candidatos
+Entre los tres clasificadores con el mismo detector, DINOv2 + LDL tenía el menor error por vaca (0.192 en 8 vacas), seguido de CORAL (0.224) y EfficientNet de clasificación (0.262), y la validación cruzada confirmó ese orden. ResNet18 daba 0.150 en sus 10 vacas de validación, pero con la validación cruzada subió a 0.354. Ese cambio es la razón por la que no bastaba con 10 vacas para decidir.
 
-La revisión incluirá las implementaciones disponibles en:
+## Contenido
 
-- `modelos/sin_cajas_resnet/`
-- `modelos/con_cajas_yolo/`, incluidas sus variantes EfficientNet y DINOv2 + LDL
-- `modelos/con_cajas_ordinal/`
-- `modelos/con_cajas_yolo_regresion/`
+`datos_agregados_validacion.csv` tiene las cifras por foto de cada modelo y `datos_agregados_vaca_validacion.csv` las cifras por vaca. `clasificadores_pareados_validacion.csv` compara los tres clasificadores que comparten detector sobre las mismas 24 fotos. Ninguno tiene identificadores de vacas ni predicciones individuales. La columna `evidencia` indica si la cifra viene del reporte del modelo o si la recalculamos con las predicciones locales.
 
-Cada versión y ejecución se registrará por separado. Una carpeta puede contener más de un candidato.
+`generar_graficas.py` hace las figuras de `figuras/` a partir de esos CSV. Desde la raíz del repositorio:
 
-## Información mínima por evaluación
+```bash
+python -m evaluacion.comparacion_modelos.generar_graficas
+```
 
-Para cada resultado se registrará:
-
-- versión o commit del código y checkpoint utilizado;
-- configuración y versión o huella de los datos autorizados;
-- partición evaluada y si ya se había consultado para tomar decisiones;
-- número de vacas e imágenes elegibles;
-- unidad de análisis: vaca o fotografía;
-- origen de las cajas: anotadas o predichas;
-- cobertura, abstenciones y sus causas;
-- métricas, denominadores y regla de agregación;
-- resultado de una referencia constante calculada sin usar las etiquetas de prueba;
-- enlace al informe o artefacto que respalda la cifra.
-
-Las métricas por fotografía no se presentarán como si correspondieran a animales independientes. El MAE calculado solo entre predicciones emitidas siempre se acompañará de la cobertura.
-
-## Reglas de comparación
-
-Una diferencia directa entre modelos requiere comprobar que coincidan la partición, las observaciones, la unidad de análisis, el origen de las cajas, la definición de la salida y el tratamiento de abstenciones. Si estas condiciones difieren, se mostrarán los resultados por separado y se explicará la limitación.
-
-Se distinguirá el desempeño del predictor con cajas anotadas del desempeño del sistema completo con detección automática. Cuando sea posible, la evaluación principal del BCS conjunto se expresará por vaca; las métricas por fotografía servirán también para diagnosticar errores.
-
-## Evaluación y decisión
-
-La comparación técnica alimentará una evaluación posterior frente a los criterios de éxito definidos en Business Understanding. Esa evaluación deberá documentar los hallazgos, revisar las limitaciones del proceso y justificar si corresponde continuar una iteración, reunir nuevos datos o aprobar un candidato. Completar un entrenamiento o superar a otro modelo en una sola métrica no constituye aprobación para uso operativo.
-
-## Privacidad
-
-Esta carpeta no debe contener datasets, fotografías, manifiestos o etiquetas reales, identificadores de animales, predicciones individuales, credenciales ni checkpoints. Cualquier resumen agregado que se publique debe revisarse antes de integrarlo en GitHub.
-
-## Corte preliminar de validación
-
-Se preparó un [resumen descriptivo con gráficas](RESUMEN_PRELIMINAR.md), un [inventario de evidencia](INVENTARIO.md), un [protocolo](PROTOCOLO.md) y una [lista de archivos pendientes](ARCHIVOS_PENDIENTES.md). Las cifras agregadas por fotografía están en [datos_agregados_validacion.csv](datos_agregados_validacion.csv) y por vaca en [datos_agregados_vaca_validacion.csv](datos_agregados_vaca_validacion.csv). También existe una [comparación pareada de tres clasificadores](clasificadores_pareados_validacion.csv) con idénticas 24 fotos y 8 vacas cubiertas. Este corte no selecciona un modelo: aún faltan conciliar dos fotos entre ResNet18 y COCO y definir una prueba independiente.
-
-La [preparación de las corridas nuevas](PLAN_EJECUCION.md) fija las verificaciones y las salidas privadas requeridas. Una [comprobación pareada local](COMPARACION_LOCAL.md) usa únicamente fotografías byte idénticas de ResNet18 y YOLO + regresión Mac; sus cifras son diagnósticas. `evaluador_comun.py` y `adaptadores_locales.py` realizan esa comprobación sin escribir identificadores ni predicciones individuales en Git.
-
-Las nuevas corridas de [DINOv2/LDL](DINO_CORRIDA_01.md), [EfficientNet de clasificación](EFFICIENTNET_CORRIDA_01.md) y [CORAL ordinal](ORDINAL_CORRIDA_01.md) ya aportan predicciones privadas de validación. Sus resultados se registran separados de los informes históricos; la categoría y la salida continua de cada una de las corridas DINO y CORAL provienen del mismo entrenamiento.
+`confusiones_pareadas.py`, `evaluador_comun.py` y `adaptadores_locales.py` leen las predicciones locales de cada corrida, revisan que se comparen las mismas fotos y solo escriben conteos agregados. Las pruebas están en `tests/` y usan datos ficticios.

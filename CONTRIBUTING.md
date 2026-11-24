@@ -45,13 +45,13 @@ Antes de crear un commit, ejecute `git status` y revise el contenido preparado c
 
 No publique:
 
-- fotografías o datasets reales;
-- manifiestos, particiones o etiquetas reales;
-- identificadores reales de animales;
-- exportaciones privadas de Roboflow;
-- credenciales, tokens, llaves o archivos `.env`;
-- checkpoints, predicciones o resultados por animal;
-- rutas locales, documentos académicos privados o datos personales.
+- Fotografías o datasets reales.
+- Manifiestos, particiones o etiquetas reales.
+- Identificadores reales de animales.
+- Exportaciones privadas de Roboflow.
+- Credenciales, tokens, llaves o archivos `.env`.
+- Checkpoints, predicciones o resultados por animal.
+- Rutas locales, documentos académicos privados o datos personales.
 
 Si un cambio necesita alguno de estos materiales para ejecutarse, documente cómo proporcionarlo localmente sin incorporarlo al repositorio.
 
@@ -63,13 +63,11 @@ Los pesos se guardan en el Drive del equipo, en una carpeta por modelo y versió
 
 Un Pull Request debe:
 
-1. concentrarse en un solo modelo o propósito;
-2. conservar la separación de datos por vaca cuando corresponda;
-3. incluir o actualizar pruebas cuando cambie el comportamiento;
-4. actualizar la documentación del modelo si cambia su uso;
-5. pasar las pruebas aplicables antes de integrarse en `main`.
-
-No se asignarán propietarios automáticos mediante `CODEOWNERS` hasta que el equipo confirme responsables y usuarios de GitHub.
+1. Concentrarse en un solo modelo o propósito.
+2. Conservar la separación de datos por vaca cuando corresponda.
+3. Incluir o actualizar pruebas cuando cambie el comportamiento.
+4. Actualizar la documentación del modelo si cambia su uso.
+5. Pasar las pruebas aplicables antes de integrarse en `main`.
 
 ## Mínimo por modelo
 

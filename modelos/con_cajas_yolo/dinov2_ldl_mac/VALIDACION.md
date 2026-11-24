@@ -1,14 +1,11 @@
 # Validación técnica
 
-## Ejecutado para preparar esta contribución
+Antes de subir esta carpeta corrimos estas pruebas en macOS ARM64 con Python 3.12, TensorFlow 2.18.1, Keras 3.8.0, tensorflow-metal 1.2.0, PyTorch 2.9.1 y NumPy 2.0.2.
 
-- Python3.12/macOS ARM64; TensorFlow2.18.1, Keras3.8.0, tensorflow-metal1.2.0, PyTorch2.9.1, NumPy2.0.2.
-- Pruebas sintéticas de comparación pareada; fórmula LDL TensorFlow frente a NumPy; gradientes; serialización de modelo/optimizador; ETL, dos vistas, entrenamiento, reanudación, evaluación y oclusión; caso de abstención total; rechazo de test no reconocido como exploratorio.
-- Integración en CPU con DINOv2 público real y una imagen sintética:1536 características, paso TensorFlow con gradientes y diagnóstico de oclusión.
-- Comprobación de sintaxis Python/bash, ayuda CLI y exclusión de datos privados del commit.
+Con datos ficticios probamos la comparación pareada, la fórmula LDL de TensorFlow contra NumPy, los gradientes, guardar y cargar el modelo con su optimizador, el ETL, las dos vistas, el entrenamiento, la reanudación, la evaluación y la oclusión. También probamos el caso en que el modelo se abstiene en todas las fotos y que el código rechace evaluar test si no se marca como exploratorio.
 
-## Límites
+Además hicimos una prueba de integración en CPU con DINOv2 real y una imagen sintética. Da las 1536 características esperadas, completa un paso de TensorFlow con gradientes y genera el mapa de oclusión. Por último revisamos la sintaxis de Python y bash, la ayuda de los comandos y que el commit no llevara datos privados.
 
-Las pruebas automatizadas del entorno de contribución no disponen de una GPU utilizable. El instalador exige comprobar MPS y Metal en el equipo destino. Esas comprobaciones operativas no sustituyen una evaluación independiente, un benchmark ni validación anatómica.
+Estas pruebas corrieron sin GPU, así que la GPU se comprueba con el instalador en cada Mac. Sirven para saber que el código funciona, pero no miden la precisión del modelo ni sustituyen una evaluación con vacas que el modelo no vio.
 
-No se incorporan datos, etiquetas, identidades, predicciones por animal ni pesos entrenados. Los CSV de comparación se proporcionan externamente. La receta cambia backend e inicialización; si se entrena otro detector también cambia el pipeline, por lo que no se atribuye automáticamente una diferencia al clasificador.
+No incluimos datos, etiquetas, identidades, predicciones por vaca ni pesos entrenados. Los CSV de comparación los pone cada integrante. Esta receta cambia el backend y la inicialización respecto al modelo anterior, y si se entrena otro detector también cambia el sistema completo, así que una diferencia en resultados no se puede atribuir solo al clasificador.
