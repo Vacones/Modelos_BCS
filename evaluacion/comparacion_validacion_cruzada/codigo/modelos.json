@@ -1,0 +1,10 @@
+[
+ {"clave": "constante", "nombre": "Constante 3.00 (línea base)", "corto": "Constante 3.00"},
+ {"clave": "resnet18_foto_completa", "nombre": "ResNet18, foto completa sin cajas", "corto": "ResNet18 foto completa"},
+ {"clave": "effnet_clasificacion", "nombre": "YOLO + EfficientNet-B0, clasificación", "corto": "EfficientNet clasificación"},
+ {"clave": "effnet_regresion", "nombre": "YOLO + EfficientNet-B0, regresión", "corto": "EfficientNet regresión"},
+ {"clave": "effnet_coral", "nombre": "YOLO + EfficientNet-B0, CORAL ordinal", "corto": "EfficientNet CORAL"},
+ {"clave": "dinov2_ldl", "nombre": "YOLO + DINOv2, LDL con 2 vistas", "corto": "DINOv2 + LDL"},
+ {"clave": "final_cajas_anotadas", "nombre": "Modelo final DINOv2-S + ridge", "corto": "Modelo final", "alerta": true, "principal": true},
+ {"clave": "final_sistema_detector", "nombre": "Modelo final, sistema completo con detector", "corto": "Sistema completo", "alerta": true, "solo_tabla": true}
+]
