@@ -26,6 +26,9 @@ Configuración final: recorte con 10% de margen, 224 × 224 px, EfficientNet-B0 
 | `bcs_ordinal.py` | Todo el código: datos, recortes, salidas, entrenamiento, validación cruzada, métricas, Grad-CAM y prueba final. |
 | `BCS_ordinal_local.ipynb` | Notebook para correr en una PC con los datos en su carpeta. |
 | `BCS_ordinal_colab.ipynb` | Notebook para Colab, lee los datos desde `MyDrive/BCS_ordinal`. |
+| `preflight_coco.py`, `preparar_coco.py` | Revisar el export COCO y prepararlo para el notebook. |
+| `entrenar_coral_holdout.py`, `evaluar_pipeline.py` | Entrenar con `train` y `valid` separados y evaluar con las cajas del detector. |
+| `tests/` | Pruebas de esos scripts con datos ficticios. |
 | `requirements.txt` | Dependencias. |
 | `resultados/` | Resúmenes y gráficas del experimento A (base congelada), del experimento B (ajuste fino, tasa 1e-5) y la comparación de tasas de la etapa 2. |
 
@@ -37,70 +40,6 @@ Las fotos y etiquetas son del CAETEC y no se suben al repositorio. Están en la 
 - `metadata_bcs_validos.csv`: 331 fotos de 66 vacas con su BCS y la partición por vaca (46 entrenamiento, 10 validación, 10 prueba).
 
 ## Cómo correrlo
-
-### Comprobación previa del COCO local (Mac)
-
-Desde la raíz de `Modelos_BCS`, con el export COCO aprobado ya descargado:
-
-```bash
-python3 -m unittest discover -s modelos/con_cajas_ordinal/tests -p 'test_*.py' -v
-python3 -m modelos.con_cajas_ordinal.preflight_coco ~/Desktop/vacones_reg/datos/coco_cajas_v2_aprobado
-```
-
-`preflight_coco.py` solo lee el COCO: comprueba identidad y BCS por foto, fugas de vacas entre particiones, BCS contradictorios por vaca, archivos presentes y una caja `ass` por foto con BCS válido. Informa conteos por partición, sin publicar identificadores. Inspecciona la estructura de `test` para detectar fugas, pero **no entrena ni evalúa el modelo en `test`**. En el COCO local revisado se esperan 239 fotos válidas de 46 vacas en `train`, 36 de 10 en `valid` y 56 de 10 en `test`; cuatro fotos de `train` quedan excluidas por etiquetas BCS ambiguas.
-
-Este preflight no convierte COCO ni crea un checkpoint. El adaptador y la nueva ruta de entrenamiento se describen abajo.
-
-Para preparar en disco privado una vista compatible con la carga de datos del notebook (fotos enlazadas, sin copiarlas), ejecuta desde la raíz del repositorio:
-
-```bash
-python3 -m modelos.con_cajas_ordinal.preparar_coco ~/Desktop/vacones_reg/datos/coco_cajas_v2_aprobado --solo-validar
-python3 -m modelos.con_cajas_ordinal.preparar_coco ~/Desktop/vacones_reg/datos/coco_cajas_v2_aprobado \
-  --salida ~/Desktop/vacones_reg/datos/ordinal_coco_preparado
-```
-
-El destino debe ser una carpeta nueva y privada. Contendrá `metadata_bcs_validos.csv` y `Vacones BCS - Cajas v2 Aprobado.yolo26/`; los archivos `images/` serán enlaces a las fotos originales, mientras que `labels/` contendrá las cajas convertidas de COCO a YOLO. No añadas ese destino a Git. El notebook local admite `BCS_CARPETA` para encontrar esa carpeta, por ejemplo `BCS_CARPETA=~/Desktop/vacones_reg/datos/ordinal_coco_preparado jupyter notebook modelos/con_cajas_ordinal/BCS_ordinal_local.ipynb`.
-
-**No ejecutes el entrenamiento del notebook histórico para la comparación maestra.** Su experimento combina `train` y `valid` en validación cruzada. La nueva ruta de abajo ajusta pesos solo con `train` y usa `valid` para seleccionar el checkpoint; por eso sus métricas de validación son de desarrollo.
-
-### Nueva corrida CORAL con train y valid separados
-
-El script `entrenar_coral_holdout.py` es una ruta nueva y separada del experimento histórico. Usa las cajas **anotadas** del COCO v2, entrena solo con `train` y escoge pesos por MAE continuo **por vaca** en `valid`. El catálogo conserva los siete niveles reales de 2.25 a 3.75, con seis umbrales CORAL; el experimento histórico fusionó 2.25 con 2.50, por lo que sus métricas no son directamente la misma variante. No se calculan predicciones de `test`.
-
-Primero comprueba las particiones, sin cargar TensorFlow ni entrenar:
-
-```bash
-python3 -m modelos.con_cajas_ordinal.entrenar_coral_holdout \
-  --datos ~/Desktop/vacones_reg/datos/coco_cajas_v2_aprobado --solo-validar
-```
-
-Después, cuando corresponda ejecutar el entrenamiento en tu Mac, desde la raíz del repositorio y con el entorno que tenga TensorFlow y Keras:
-
-```bash
-python -m modelos.con_cajas_ordinal.entrenar_coral_holdout \
-  --datos ~/Desktop/vacones_reg/datos/coco_cajas_v2_aprobado \
-  --salida ~/Desktop/vacones_reg/resultados_ordinal/coral_holdout_v1 \
-  --epochs-head 30 --epochs-finetune 30 --patience 8 --batch 16
-```
-
-La carpeta de salida debe ser nueva y privada. Allí quedarán los pesos `*.weights.h5`, `predicciones_val_foto.csv`, `predicciones_val_vaca.csv`, `metricas_val.json` y `ejecucion.json` con huellas del código y COCO. No subas esos artefactos individuales a Git. Como usa cajas anotadas, este resultado mide el predictor ordinal con recortes ideales; para la comparación del sistema completo con otros modelos hará falta una evaluación adicional con cajas predichas y abstenciones.
-
-### Evaluación del sistema con cajas predichas
-
-`evaluar_pipeline.py` reconstruye el checkpoint seleccionado y usa las cajas del detector compartido con DINOv2 y YOLO + EfficientNet. Reproduce el recorte ordinal del trasero con 10% de margen y conserva cada abstención en las 36 fotos de `valid`. Comprueba la huella de los COCO del entrenamiento, el conjunto exacto de fotos y los estados del detector antes de cargar TensorFlow. No evalúa `test` ni vuelve a entrenar.
-
-Primero comprueba las entradas, desde la raíz del repositorio:
-
-```bash
-python -m modelos.con_cajas_ordinal.evaluar_pipeline \
-  --datos "$HOME/Desktop/vacones_reg/datos/coco_cajas_v2_aprobado" \
-  --entrenamiento "$HOME/Desktop/vacones_reg/resultados_ordinal/coral_holdout_v1" \
-  --cajas "$HOME/Desktop/vacones_reg/resultados_yolo_eff_mac/recortes_val_detector_compartido" \
-  --salida "$HOME/Desktop/vacones_reg/resultados_ordinal/coral_pipeline_val_v1" \
-  --solo-validar
-```
-
-Si informa 36 fotos y 24 con un par válido, ejecuta el mismo comando sin `--solo-validar`. La salida debe ser una carpeta privada nueva. Contendrá predicciones individuales, métricas con cobertura por foto y vaca, y la huella del checkpoint. El MAE sobre fotos cubiertas se presenta junto con las abstenciones; la agregación ordinal nativa por vaca y la media común de BCS por foto se reportan por separado.
 
 ### Windows con GPU NVIDIA
 
@@ -125,6 +64,40 @@ Sube el zip del export y `metadata_bcs_validos.csv` a `MyDrive/BCS_ordinal`, eli
 `pip install tensorflow -r requirements.txt` y abre `BCS_ordinal_local.ipynb` desde una carpeta con los datos.
 
 En una RTX 4060 de laptop, cada configuración del experimento B tarda alrededor de 30 minutos. Lo que ya se corrió no se repite: cada fila de resultados guarda en la columna `config` los hiperparámetros, y `comparar_configuraciones` pone lado a lado las configuraciones corridas.
+
+### Corrida con train y valid separados
+
+El notebook junta `train` y `valid` en la validación cruzada. Para comparar este modelo con los demás en las mismas 36 fotos de validación agregamos tres scripts que entrenan solo con `train` y usan `valid` para elegir el checkpoint. Se corren desde la raíz del repositorio con el export COCO aprobado. Las carpetas de salida deben ser nuevas y quedar fuera del repositorio, porque guardan pesos y predicciones por foto y por vaca.
+
+`preflight_coco.py` solo lee el COCO. Revisa la identidad y el BCS de cada foto, que ninguna vaca aparezca en dos particiones, que una vaca no tenga dos BCS distintos, que existan los archivos y que cada foto con BCS válido tenga una caja `ass`. Muestra conteos sin identificadores. Con el export aprobado debe dar 239 fotos válidas de 46 vacas en `train`, 36 de 10 en `valid` y 56 de 10 en `test`, porque cuatro fotos de `train` tienen un BCS ambiguo. `preparar_coco.py` arma una carpeta con la estructura que espera el notebook, con enlaces a las fotos y las cajas convertidas a YOLO. El notebook la encuentra con la variable `BCS_CARPETA`.
+
+```bash
+python3 -m unittest discover -s modelos/con_cajas_ordinal/tests -p 'test_*.py' -v
+python3 -m modelos.con_cajas_ordinal.preflight_coco /ruta/al/coco_cajas_v2_aprobado
+python3 -m modelos.con_cajas_ordinal.preparar_coco /ruta/al/coco_cajas_v2_aprobado \
+  --salida /ruta/privada/ordinal_coco_preparado
+```
+
+`entrenar_coral_holdout.py` entrena con las cajas anotadas y elige los pesos por el MAE continuo por vaca en `valid`. A diferencia del notebook, conserva los siete niveles de 2.25 a 3.75, con seis umbrales CORAL, y no calcula predicciones de `test`. Con `--solo-validar` revisa las particiones sin entrenar.
+
+```bash
+python -m modelos.con_cajas_ordinal.entrenar_coral_holdout \
+  --datos /ruta/al/coco_cajas_v2_aprobado \
+  --salida /ruta/privada/coral_holdout_v1 \
+  --epochs-head 30 --epochs-finetune 30 --patience 8 --batch 16
+```
+
+`evaluar_pipeline.py` toma ese checkpoint y evalúa el sistema completo con las cajas del detector que compartieron DINOv2 + LDL y YOLO + EfficientNet. Usa el mismo recorte con 10 % de margen y conserva las abstenciones en las 36 fotos de `valid`. Con `--solo-validar` revisa primero las entradas, y debe informar 36 fotos y 24 con un par válido.
+
+```bash
+python -m modelos.con_cajas_ordinal.evaluar_pipeline \
+  --datos /ruta/al/coco_cajas_v2_aprobado \
+  --entrenamiento /ruta/privada/coral_holdout_v1 \
+  --cajas /ruta/privada/recortes_val_detector_compartido \
+  --salida /ruta/privada/coral_pipeline_val_v1
+```
+
+Los resultados de estas corridas están en [`evaluacion/comparacion_modelos`](../../evaluacion/comparacion_modelos/).
 
 ## Referencias
 

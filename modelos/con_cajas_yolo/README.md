@@ -2,130 +2,28 @@
 
 Este proyecto utiliza la carpeta descargada del notebook de conversión: fotografías, cajas YOLO, metadatos BCS y JSON COCO originales. Incluye ETL, EDA, entrenamiento, checkpoints, evaluación y predicción sobre imágenes nuevas. No incluye los pesos entrenados ni las fotografías.
 
-**Entorno previsto:** Windows con WSL2/Ubuntu y GPU NVIDIA compatible con CUDA. Los comandos de Python se ejecutan dentro de Ubuntu, no en PowerShell. No hay interfaz web ni archivos de configuración que debas escribir a mano; las opciones se pasan desde la terminal. El YAML que necesita YOLO se genera durante el ETL.
+**Entorno previsto:** Windows con WSL2/Ubuntu y GPU NVIDIA compatible con CUDA. Los comandos de Python se ejecutan dentro de Ubuntu, no en PowerShell. No hay interfaz web ni archivos de configuración que debas escribir a mano, porque las opciones se pasan desde la terminal. El YAML que necesita YOLO se genera durante el ETL.
 
-**Arquitectura:** YOLO26 detecta `cow` y `ass`; un recorte de `ass` se clasifica mediante EfficientNet-B0 en TensorFlow/Keras. El entrenamiento oficial de YOLO26 usa PyTorch. Por ello hay dos entornos virtuales separados, y las etapas se ejecutan en procesos distintos para evitar mezclar sus bibliotecas CUDA. El clasificador BCS, su ajuste fino y la inferencia BCS son TensorFlow.
+**Arquitectura:** YOLO26 detecta `cow` y `ass`, y el recorte de `ass` se clasifica mediante EfficientNet-B0 en TensorFlow/Keras. El entrenamiento oficial de YOLO26 usa PyTorch. Por ello hay dos entornos virtuales separados, y las etapas se ejecutan en procesos distintos para evitar mezclar sus bibliotecas CUDA. El clasificador BCS, su ajuste fino y la inferencia BCS son TensorFlow.
 
 ## Alternativa para Mac Apple Silicon
 
-La implementación [DINOv2 + LDL para Mac](dinov2_ldl_mac/README.md) conserva YOLO,
-extrae dos vistas de la grupa con DINOv2 congelado mediante PyTorch/MPS y entrena
-una cabeza de distribución BCS en TensorFlow/Metal. Incluye checkpoints,
-evaluación y mapas de sensibilidad por oclusión. Sus datos, referencias de
-comparación y pesos se proporcionan externamente; no modifica el pipeline
-WSL/EfficientNet descrito a continuación.
+La implementación [DINOv2 + LDL para Mac](dinov2_ldl_mac/README.md) conserva YOLO, extrae dos vistas de la grupa con DINOv2 congelado y entrena una cabeza de distribución BCS en TensorFlow/Metal. Tiene sus propios scripts e instalador y no cambia el pipeline de esta carpeta.
 
-### Preparación del clasificador YOLO + EfficientNet en Mac
-
-El COCO `coco_cajas_v2_aprobado` puede revisarse sin modificarlo antes de crear
-una nueva ejecución. Desde la raíz del repositorio:
-
-```bash
-python3 -m modelos.con_cajas_yolo.preflight_mac \
-  ~/Desktop/vacones_reg/datos/coco_cajas_v2_aprobado
-```
-
-El comando solo lee imágenes y anotaciones; imprime conteos por partición y
-huellas SHA-256 de los JSON COCO, nunca identificadores individuales. Las fotos
-con etiquetas BCS ambiguas se cuentan como no utilizables para el clasificador,
-pero siguen presentes para el detector. El número de vacas puede incluir
-identidades de esas fotos ambiguas.
-
-**Estado Mac:** el preflight está comprobado con datos sintéticos y se ejecutó
-en modo lectura sobre la versión local aprobada. El detector ahora acepta
-`--device mps` cuando PyTorch informa MPS disponible; la selección se probó
-unitariamente. No se ha hecho un entrenamiento ni una inferencia integral de
-YOLO + EfficientNet en este entorno. El instalador sigue orientado a WSL/CUDA,
-por lo que se utilizará un entorno Mac separado y se comprobarán PyTorch/MPS y
-TensorFlow/Metal antes de entrenar. Los pesos históricos del clasificador y de
-su detector no están incluidos en el repositorio: una corrida Mac será nueva.
-
-El siguiente paso para Eduardo es generar una **entrada normalizada nueva**
-desde el COCO, sin alterar el original. Desde la raíz del repositorio, con el
-entorno Mac activado:
-
-```bash
-python -m modelos.con_cajas_yolo.preparar_coco_mac \
-  --coco ~/Desktop/vacones_reg/datos/coco_cajas_v2_aprobado \
-  --solo-validar
-
-python -m modelos.con_cajas_yolo.preparar_coco_mac \
-  --coco ~/Desktop/vacones_reg/datos/coco_cajas_v2_aprobado \
-  --salida ~/Desktop/vacones_reg/datos/coco_yolo_eff_mac
-```
-
-El segundo comando crea una carpeta nueva con enlaces a imágenes, etiquetas
-YOLO, metadatos y copia de los JSON COCO. Rechaza una vaca compartida entre
-particiones **antes de crear la salida**. No lo hemos ejecutado aún sobre el
-conjunto real; solo se probó con un COCO sintético. El paso posterior será
-`pipeline.py etl` con esa carpeta como `--data`, verificando conteos y huellas.
-Se trabajará primero con `valid`; `test` no se consulta para ajustar decisiones.
-
-Para continuar en el Mac, usa Python 3.12 y un entorno nuevo; no reutilices
-los pesos ni las salidas del modelo de regresión. Los comandos siguientes se
-ejecutan desde la raíz del repositorio:
+Este mismo pipeline YOLO + EfficientNet también corre en Mac. `preflight_mac.py` revisa el COCO aprobado sin modificarlo y solo imprime conteos por partición, y `preparar_coco_mac.py` lo convierte a la estructura que espera `pipeline.py etl`, con enlaces a las fotos en lugar de copias. Desde la raíz del repositorio:
 
 ```bash
 uv venv --python 3.12 .venv-yolo-eff-mac
 source .venv-yolo-eff-mac/bin/activate
 uv pip install -r modelos/con_cajas_yolo/requirements-mac.txt
-uv pip check
-python -c "import torch, tensorflow as tf; print('MPS:', torch.backends.mps.is_available()); print('Metal:', tf.config.list_physical_devices('GPU'))"
+
+python3 -m modelos.con_cajas_yolo.preflight_mac /ruta/al/coco_cajas_v2_aprobado
+python -m modelos.con_cajas_yolo.preparar_coco_mac \
+  --coco /ruta/al/coco_cajas_v2_aprobado \
+  --salida /ruta/privada/coco_yolo_eff_mac
 ```
 
-Solo si MPS y Metal están disponibles, preparar el manifiesto privado:
-
-```bash
-python modelos/con_cajas_yolo/pipeline.py etl \
-  --data ~/Desktop/vacones_reg/datos/coco_yolo_eff_mac \
-  --work ~/Desktop/vacones_reg/resultados_yolo_eff_mac/preparacion_v1 \
-  --size 224
-```
-
-La salida del ETL debe indicar 239 fotos BCS utilizables en `train`, 36 en
-`val` y 56 en `test`, además de conservar la separación por vaca. No es una
-autorización para consultar métricas de `test` durante el desarrollo.
-
-La secuencia de entrenamiento y validación, cuando los pasos anteriores
-pasen en el Mac, es:
-
-```bash
-python modelos/con_cajas_yolo/pipeline.py train \
-  --work ~/Desktop/vacones_reg/resultados_yolo_eff_mac/preparacion_v1 \
-  --run ~/Desktop/vacones_reg/resultados_yolo_eff_mac/cabeza_v1 \
-  --phase head --epochs 30 --batch 4 --lr 0.001
-
-python modelos/con_cajas_yolo/pipeline.py train \
-  --work ~/Desktop/vacones_reg/resultados_yolo_eff_mac/preparacion_v1 \
-  --run ~/Desktop/vacones_reg/resultados_yolo_eff_mac/ajuste_fino_v1 \
-  --phase finetune \
-  --init ~/Desktop/vacones_reg/resultados_yolo_eff_mac/cabeza_v1/best.keras \
-  --epochs 20 --batch 4 --lr 0.00001 --fine-layers 20
-
-python modelos/con_cajas_yolo/pipeline.py detector-train \
-  --work ~/Desktop/vacones_reg/resultados_yolo_eff_mac/preparacion_v1 \
-  --run ~/Desktop/vacones_reg/resultados_yolo_eff_mac/detector_v1 \
-  --weights yolo26n.pt --epochs 80 --batch 4 --imgsz 640 --device mps
-
-python modelos/con_cajas_yolo/pipeline.py detector-crops \
-  --work ~/Desktop/vacones_reg/resultados_yolo_eff_mac/preparacion_v1 \
-  --weights ~/Desktop/vacones_reg/resultados_yolo_eff_mac/detector_v1/weights/best.pt \
-  --out ~/Desktop/vacones_reg/resultados_yolo_eff_mac/recortes_val_v1 \
-  --splits val --device mps --conf 0.25
-
-python modelos/con_cajas_yolo/pipeline.py evaluate \
-  --work ~/Desktop/vacones_reg/resultados_yolo_eff_mac/preparacion_v1 \
-  --model ~/Desktop/vacones_reg/resultados_yolo_eff_mac/ajuste_fino_v1/best.keras \
-  --split val \
-  --boxes ~/Desktop/vacones_reg/resultados_yolo_eff_mac/recortes_val_v1 \
-  --out ~/Desktop/vacones_reg/resultados_yolo_eff_mac/evaluacion_val_v1
-```
-
-Se guardarán localmente `predicciones.csv`, `por_vaca.csv`, `metricas.json` y
-las figuras de evaluación. El uso de `--device mps` pasó pruebas de selección,
-pero **esta secuencia completa aún no se ha ejecutado en Mac**. Si falla alguna
-etapa, se corrige y se repite en una carpeta nueva; no se sustituyen resultados
-incompletos por cifras históricas.
+Después se siguen los pasos de las secciones 5 a 9 con `python` del entorno de Mac en lugar de `.venv-tf/bin/python` y `.venv-yolo/bin/python`, y con `--device mps` en lugar de `--device 0`. Las carpetas de trabajo no se suben a GitHub, porque el ETL guarda rutas, identificadores y recortes.
 
 ## 1. Preparar WSL2 y comprobar la tarjeta
 
@@ -198,7 +96,7 @@ Después el entorno YOLO:
 bash instalar_wsl.sh yolo
 ```
 
-Utiliza Ultralytics 8.4.0 y PyTorch 2.9.1/torchvision 0.24.1 con ruedas CUDA 12.6. No se ejecutan ambas redes a la vez en memoria. Si tu tarjeta requiere otra rueda CUDA, sigue las instrucciones oficiales de PyTorch; el instalador permite cambiar el índice mediante `TORCH_WHL_INDEX`. No cambies de versión al azar si aparece un error de arquitectura CUDA.
+Utiliza Ultralytics 8.4.0 y PyTorch 2.9.1/torchvision 0.24.1 con ruedas CUDA 12.6. No se ejecutan ambas redes a la vez en memoria. Si tu tarjeta requiere otra rueda CUDA, sigue las instrucciones oficiales de PyTorch. El instalador permite cambiar el índice mediante `TORCH_WHL_INDEX`. No cambies de versión al azar si aparece un error de arquitectura CUDA.
 
 Para volver a comprobar cada entorno:
 
@@ -207,7 +105,7 @@ Para volver a comprobar cada entorno:
 .venv-yolo/bin/python comprobar_gpu.py --framework torch
 ```
 
-**No continúes si falla la GPU.** Que `nvidia-smi` funcione no basta: las operaciones de entrenamiento anteriores también deben pasar. Un error `no kernel image` o `unsupported compute capability` indica incompatibilidad entre tarjeta y binario; no demuestra un error en tus datos.
+**No continúes si falla la GPU.** Que `nvidia-smi` funcione no basta: las operaciones de entrenamiento anteriores también deben pasar. Un error `no kernel image` o `unsupported compute capability` indica incompatibilidad entre tarjeta y binario, no un error en tus datos.
 
 ## 4. Pruebas cortas antes del entrenamiento
 
@@ -231,7 +129,7 @@ El ETL comprueba fotos y dimensiones, verifica la correspondencia entre metadato
 
 Mantiene las particiones originales. Los BCS ambiguos se excluyen de clasificación, pero sus fotos y cajas siguen disponibles para el detector. Extrae recortes posteriores anotados, los convierte a RGB y aplica relleno para llegar a 224 × 224 sin estirar la forma del animal. No divide los valores entre 255: EfficientNet de Keras incluye su escalado interno.
 
-Los IDs solo se utilizan para trazabilidad y revisión de particiones: no se entregan como características al clasificador. El catálogo BCS se deriva de las categorías presentes en entrenamiento; no se ajustan clases con imágenes de prueba.
+Los IDs solo se usan para revisar las particiones y no entran como características al clasificador. El catálogo BCS sale de las categorías presentes en entrenamiento, sin ver las imágenes de prueba.
 
 Los conteos se calculan desde los datos externos proporcionados. Las imágenes con etiquetas ambiguas no se usan para entrenar el clasificador.
 
@@ -259,9 +157,9 @@ Primero, entrenar la cabeza de clasificación con la base congelada:
 .venv-tf/bin/python pipeline.py train --work salida --run runs/bcs_head --phase head --epochs 30 --batch 4 --lr 0.001
 ```
 
-Se descargarán los pesos ImageNet la primera vez. El aumento de datos se aplica solo durante entrenamiento: inversión horizontal, rotación moderada y zoom moderado. La salida es `softmax`; la pérdida es entropía cruzada categórica dispersa. Los pesos de clase se calculan únicamente con entrenamiento para moderar el desbalance.
+Se descargarán los pesos ImageNet la primera vez. El aumento de datos se aplica solo durante entrenamiento: inversión horizontal, rotación moderada y zoom moderado. La salida es `softmax` y la pérdida es entropía cruzada categórica dispersa. Los pesos de clase se calculan únicamente con entrenamiento para moderar el desbalance.
 
-Se utilizan `train` para aprender y `val` para seleccionar el mejor checkpoint según `val_loss`. **El entrenamiento no consulta las fotografías de `test`.** Los valores iniciales son manuales y revisables; no constituyen hiperparámetros optimizados.
+Se utilizan `train` para aprender y `val` para seleccionar el mejor checkpoint según `val_loss`. **El entrenamiento no consulta las fotografías de `test`.** Los valores iniciales los fijamos a mano y no son hiperparámetros optimizados.
 
 Después, ajuste fino de las últimas 20 capas, manteniendo congeladas las capas BatchNormalization:
 
@@ -282,7 +180,7 @@ A continuación se usa `runs/bcs_finetune/best.keras` como ejemplo. Si validaci�
 
 ### Checkpoints y reanudación
 
-Cada época completa guarda un `.keras` con el optimizador y un registro de finalización. Se conservan los dos últimos checkpoints completos y una copia independiente `best.keras`; se mantienen los registros de todas las épocas. También se generan `historial.csv`, `curvas_entrenamiento.png` y logs TensorBoard.
+Cada época completa guarda un `.keras` con el optimizador y un registro de finalización. Se conservan los dos últimos checkpoints completos y una copia independiente `best.keras`, y se mantienen los registros de todas las épocas. También se generan `historial.csv`, `curvas_entrenamiento.png` y logs TensorBoard.
 
 Si se interrumpe la fase head:
 
@@ -296,7 +194,7 @@ Si se interrumpe el ajuste fino:
 .venv-tf/bin/python pipeline.py train --work salida --run runs/bcs_finetune --phase finetune --init runs/bcs_head/best.keras --epochs 20 --batch 4 --lr 0.00001 --fine-layers 20 --resume
 ```
 
-Mantén los mismos parámetros. `--epochs` representa el total deseado, no épocas adicionales. Si ya completaste ese total y quieres continuar, auméntalo. Se recupera la última época completa, no un lote a mitad de época. El contador de paciencia se reinicia al reanudar y el flujo aleatorio del aumento puede variar; no se promete reproducción bit a bit. No modifiques el modelo de inicialización ni los datos entre reanudaciones.
+Mantén los mismos parámetros. `--epochs` representa el total deseado, no épocas adicionales. Si ya completaste ese total y quieres continuar, auméntalo. Se recupera la última época completa, no un lote a mitad de época. El contador de paciencia se reinicia al reanudar y el aumento de datos puede cambiar, así que el resultado puede no ser idéntico al de una corrida sin interrupciones. No modifiques el modelo de inicialización ni los datos entre reanudaciones.
 
 ## 7. Entrenar el detector YOLO26
 
@@ -358,9 +256,9 @@ Las fotos con supervisión BCS válida pero sin detección/asociación aceptable
 |---|---|
 | `metricas.json` | Conteos, cobertura, exactitud y exactitud dentro de ±0.25/±0.50. |
 | `accuracy_all_tolerance_0` | Acierto exacto sobre todas las imágenes elegibles, incluidos fallos del detector. |
-| `accuracy_all_tolerance_0.25` / `0.5` | Proporción dentro de cada tolerancia; los casos no clasificados cuentan como no aciertos. |
-| `mae_classified`, `rmse_classified` | Error BCS únicamente en imágenes clasificadas; leer junto con cobertura. |
-| `macro_f1_all_catalog` | F1 macro sobre el catálogo completo; clases sin soporte reciben 0 y aparecen en el reporte. |
+| `accuracy_all_tolerance_0.25` / `0.5` | Proporción dentro de cada tolerancia. Los casos no clasificados cuentan como no aciertos. |
+| `mae_classified`, `rmse_classified` | Error BCS solo en imágenes clasificadas. Se lee junto con la cobertura. |
+| `macro_f1_all_catalog` | F1 macro sobre el catálogo completo. Las clases sin soporte reciben 0 y aparecen en el reporte. |
 | `quadratic_kappa_classified` | Concordancia ordinal entre clases, cuando es calculable. |
 | `predicciones.csv` | Referencia, predicción, score y estado de cada imagen elegible. |
 | `por_vaca.csv` | Cobertura y acierto dentro de ±0.50 por vaca. |
@@ -388,7 +286,7 @@ En el entorno TensorFlow:
 .venv-tf/bin/python pipeline.py predict --model runs/bcs_finetune/best.keras --bundle prediccion_nueva
 ```
 
-La salida se guarda en `bcs_prediction.json`. El sistema no identifica automáticamente al animal; una foto con múltiples candidatos puede quedar sin clasificación.
+La salida se guarda en `bcs_prediction.json`. El sistema no identifica al animal, y una foto con varias vacas candidatas puede quedar sin clasificación.
 
 ## 10. Problemas frecuentes
 
@@ -401,7 +299,7 @@ La salida se guarda en `bcs_prediction.json`. El sistema no identifica automáti
 - **Cambiaste etiquetas o moviste fotos:** repite ETL en una carpeta nueva y comienza una nueva ejecución de entrenamiento.
 - **Dos vacas en la foto:** las cajas y los tags de imagen no resuelven la identidad por instancia. El flujo automático exige un par único y marca ambigüedades.
 
-Las instalaciones CUDA pueden ocupar bastantes GB; reserva margen para entornos, caché de pip, pesos y checkpoints. Los valores exactos dependen del equipo y las descargas. El tamaño del dataset por sí solo no garantiza un porcentaje de precisión.
+Las instalaciones CUDA pueden ocupar bastantes GB, así que reserva margen para entornos, caché de pip, pesos y checkpoints. Los valores exactos dependen del equipo y las descargas. El tamaño del dataset por sí solo no garantiza un porcentaje de precisión.
 
 ## Pruebas y límites
 
@@ -418,8 +316,8 @@ asociaciones ambiguas, formato YOLO y métricas con abstenciones mediante datos
 ficticios creados temporalmente. No requieren fotografías ni etiquetas privadas.
 
 `tests.smoke_tensorflow` se ejecuta por separado en el entorno TensorFlow.
-No se afirma que las pruebas unitarias validen CUDA, el entrenamiento completo
-ni el desempeño científico. No se publican métricas de experimentos privados.
+Estas pruebas revisan que el código funcione, pero no comprueban CUDA ni la
+calidad del modelo. Para eso están las evaluaciones de la sección 8.
 
 ## Publicación y colaboración
 
