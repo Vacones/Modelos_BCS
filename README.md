@@ -1,4 +1,4 @@
-# Modelos BCS — Vacones
+# Modelos BCS del equipo Vacones
 
 Repositorio común del equipo Vacones para desarrollar y comparar modelos de estimación del **Body Condition Score (BCS)** de vacas a partir de imágenes.
 
@@ -8,11 +8,13 @@ Aquí se publica código, pruebas, ejemplos ficticios, documentación técnica y
 
 | Área | Contenido | Estado |
 |---|---|---|
-| [`modelos/sin_cajas_resnet`](modelos/sin_cajas_resnet/) | ResNet18 con fotografías completas y predicción conjunta por vaca. | Baseline entrenado y evaluado; código y pruebas disponibles. |
-| [`modelos/con_cajas_yolo`](modelos/con_cajas_yolo/) | YOLO + EfficientNet y una variante YOLO + DINOv2/LDL. | Código y pruebas disponibles; cada implementación tiene su propio entorno. |
-| [`modelos/con_cajas_ordinal`](modelos/con_cajas_ordinal/) | EfficientNet-B0 + CORAL con recorte de grupa. | Código y notebooks disponibles; faltan pruebas automatizadas propias. |
-| [`modelos/con_cajas_yolo_regresion`](modelos/con_cajas_yolo_regresion/) | YOLO26n + EfficientNet-B0 para estimar BCS continuo. | Notebooks de entrenamiento v2 y evaluación disponibles; falta verificar una ejecución limpia y añadir pruebas. |
-| [`evaluacion/comparacion_modelos`](evaluacion/comparacion_modelos/) | Comparación de candidatos bajo un protocolo común. | Pendiente; no hay una comparación final aprobada. |
+| [`modelos/sin_cajas_resnet`](modelos/sin_cajas_resnet/) | ResNet18 con fotografías completas y predicción conjunta por vaca. | Baseline entrenado y evaluado. Código y pruebas disponibles. |
+| [`modelos/con_cajas_yolo`](modelos/con_cajas_yolo/) | YOLO + EfficientNet y una variante YOLO + DINOv2/LDL. | Código y pruebas disponibles. Cada implementación tiene su propio entorno. |
+| [`modelos/con_cajas_ordinal`](modelos/con_cajas_ordinal/) | EfficientNet-B0 + CORAL con recorte de grupa. | Código, notebooks y pruebas disponibles. |
+| [`modelos/con_cajas_yolo_regresion`](modelos/con_cajas_yolo_regresion/) | YOLO26n + EfficientNet-B0 para estimar BCS continuo. | Notebooks de entrenamiento v2 y evaluación disponibles. Falta verificar una ejecución limpia. |
+| [`modelos/Modelo final DINOv2 ridge BCS`](modelos/Modelo%20final%20DINOv2%20ridge%20BCS/) | Detector YOLO26n, recorte de grupa, DINOv2-S congelado, ridge y calibración lineal. | Modelo aprobado en Evaluation (versión 1.0). Pesos en el Drive del equipo con su SHA-256. |
+| [`evaluacion/comparacion_validacion_cruzada`](evaluacion/comparacion_validacion_cruzada/) | Los seis enfoques reentrenados con las mismas 66 vacas y los mismos pliegues, con todas las métricas por vaca. | Comparación final. El modelo final es el mejor en todas las métricas. |
+| [`evaluacion/comparacion_modelos`](evaluacion/comparacion_modelos/) | Corte preliminar con las validaciones originales de cada modelo. | Preliminar, reemplazado por la comparación con validación cruzada. |
 
 
 ## Flujo de colaboración
@@ -37,6 +39,12 @@ Las reglas completas están en [`CONTRIBUTING.md`](CONTRIBUTING.md).
 - [Variante con cajas para Mac: DINOv2 + LDL](modelos/con_cajas_yolo/dinov2_ldl_mac/README.md)
 - [Modelo ordinal: EfficientNet-B0 + CORAL](modelos/con_cajas_ordinal/README.md)
 - [Modelo con cajas y regresión continua](modelos/con_cajas_yolo_regresion/README.md)
+- [Modelo final: DINOv2-S y ridge](modelos/Modelo%20final%20DINOv2%20ridge%20BCS/README.md)
+- [Comparación con validación cruzada por vaca](evaluacion/comparacion_validacion_cruzada/README.md)
+
+## Pesos de los modelos
+
+Los pesos entrenados no se suben a GitHub. Se guardan en el Drive del equipo, con acceso solo para el equipo y los profesores, y el README de cada modelo indica el enlace, la ruta donde va cada archivo y su SHA-256 para comprobar que es la misma versión que se evaluó.
 
 ## Uso responsable
 

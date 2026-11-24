@@ -332,7 +332,7 @@ Se generan las métricas y gráficas soportadas por Ultralytics: precisión, rec
 
 Esta evaluación mide clasificación con una región correcta proporcionada por la anotación. No demuestra la calidad del sistema automático.
 
-### B. Fotos completas → cajas predichas → clasificación
+### B. Fotos completas, cajas predichas y clasificación
 
 Primero genera las cajas y recortes automáticos en un proceso YOLO:
 

@@ -14,6 +14,8 @@ Use una rama descriptiva basada en el área:
 
 No desarrolle directamente sobre `main`. Esa rama debe contener únicamente versiones revisadas y funcionales.
 
+Suba los cambios con `git` desde una rama y un Pull Request. No use la opción de subir archivos de la página de GitHub, porque escribe directo en `main` y no respeta `.gitignore`, así que puede publicar fotos, etiquetas o pesos sin que nadie lo revise.
+
 ## Mensajes de commit
 
 Escriba los mensajes en español, en modo imperativo o infinitivo y con una categoría breve. Ejemplos:
@@ -52,6 +54,10 @@ No publique:
 - rutas locales, documentos académicos privados o datos personales.
 
 Si un cambio necesita alguno de estos materiales para ejecutarse, documente cómo proporcionarlo localmente sin incorporarlo al repositorio.
+
+## Pesos y modelos entrenados
+
+Los pesos se guardan en el Drive del equipo, en una carpeta por modelo y versión, compartida solo con el equipo y los profesores. El README del modelo debe incluir el enlace, la ruta donde va cada archivo dentro de la carpeta del modelo, su tamaño y su SHA-256, y un archivo `HUELLAS.txt` que se pueda comprobar con `sha256sum -c`. Si los pesos cambian, se publica una versión nueva en otra carpeta y no se reemplaza la anterior, para que los resultados reportados se puedan reproducir.
 
 ## Pull Requests
 
