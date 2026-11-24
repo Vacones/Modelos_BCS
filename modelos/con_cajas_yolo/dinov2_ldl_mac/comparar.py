@@ -69,7 +69,7 @@ def main():
     save_json(out/'comparacion.json',result);save_csv(out/'comparacion.csv',result['table'])
     lines=['# Comparación con ordinal v4','', '| Métrica | Ordinal v4 | DINOv2 | Diferencia |','|---|---:|---:|---:|']
     for r in result['table']:
-        fmt=lambda x:'—' if x is None else f'{x:.6f}'
+        fmt=lambda x:'-' if x is None else f'{x:.6f}'
         lines.append('| '+' | '.join([r['metric']]+[fmt(r[k]) for k in ['ordinal_v4','dinov2','delta_dino_menos_ordinal']])+' |')
     lines.extend(['',result['note'],'','MAE menor es mejor; exactitud y cobertura mayores son mejores.',
         'Cumple ±0.25: '+str(result['dinov2']['success_025'])+'; cumple ±0.50: '+str(result['dinov2']['success_050']),

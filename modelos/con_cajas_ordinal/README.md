@@ -17,7 +17,7 @@ Estimamos la condición corporal (BCS) de una vaca a partir de una foto trasera.
 - El modelo comprime sus predicciones hacia 3.00, y el error crece en los extremos (0.45 en vacas de 3.75).
 - Las 10 vacas de prueba ya se usaron. `EVALUAR_PRUEBA` debe quedarse en `False`.
 
-Configuración final: recorte con 10% de margen, 224 × 224 px, EfficientNet-B0 con Dropout 0.3 y salida CORAL; AdamW con weight decay 1e-4 y batch 16. La etapa 1 entrena solo la salida con tasa 1e-3; la etapa 2 descongela `block7` y `top` (BatchNorm congelada) con tasa 1e-5. La parada temprana usa paciencia 8 sobre el MAE por vaca de una validación interna.
+Configuración final: recorte con 10% de margen, 224 × 224 px, EfficientNet-B0 con Dropout 0.3 y salida CORAL, entrenada con AdamW, weight decay 1e-4 y batch 16. La etapa 1 entrena solo la salida con tasa 1e-3 y la etapa 2 descongela `block7` y `top` (BatchNorm congelada) con tasa 1e-5. La parada temprana usa paciencia 8 sobre el MAE por vaca de una validación interna.
 
 ## Archivos
 
@@ -128,6 +128,6 @@ En una RTX 4060 de laptop, cada configuración del experimento B tarda alrededor
 
 ## Referencias
 
-- Cao, W., Mirjalili, V. y Raschka, S. (2020). Rank consistent ordinal regression for neural networks with application to age estimation. *Pattern Recognition Letters*, 140, 325–331.
-- Shi, X., Cao, W. y Raschka, S. (2023). Deep neural networks for rank-consistent ordinal regression based on conditional probabilities. *Pattern Analysis and Applications*, 26, 941–955.
-- Tan, M. y Le, Q. (2019). EfficientNet: Rethinking model scaling for convolutional neural networks. *Proceedings of the 36th International Conference on Machine Learning*, 6105–6114.
+- Cao, W., Mirjalili, V. y Raschka, S. (2020). Rank consistent ordinal regression for neural networks with application to age estimation. *Pattern Recognition Letters*, 140, 325-331.
+- Shi, X., Cao, W. y Raschka, S. (2023). Deep neural networks for rank-consistent ordinal regression based on conditional probabilities. *Pattern Analysis and Applications*, 26, 941-955.
+- Tan, M. y Le, Q. (2019). EfficientNet: Rethinking model scaling for convolutional neural networks. *Proceedings of the 36th International Conference on Machine Learning*, 6105-6114.

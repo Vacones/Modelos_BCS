@@ -106,3 +106,8 @@ salida*/
 !evaluacion/comparacion_validacion_cruzada/resultados/*.csv
 !evaluacion/comparacion_validacion_cruzada/resultados/*.json
 !evaluacion/comparacion_validacion_cruzada/resultados/fig_*.png
+
+# Modelo ordinal: resúmenes agregados y gráficas ya revisados
+!modelos/con_cajas_ordinal/resultados/
+!modelos/con_cajas_ordinal/resultados/*.xlsx
+!modelos/con_cajas_ordinal/resultados/*.png

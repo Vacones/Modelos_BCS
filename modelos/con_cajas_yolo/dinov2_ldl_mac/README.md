@@ -11,7 +11,7 @@ Esta carpeta publica código, pruebas con datos ficticios y documentación. Los 
 | YOLO | Detectar `cow` y `ass` y exigir un par único | PyTorch/MPS, GPU Apple |
 | Preparación | Recortar la grupa y rellenar a 224×224 sin estirar | CPU |
 | DINOv2 ViT-S/14 congelado | Extraer CLS y media de parches de cada vista | PyTorch/MPS, GPU Apple |
-| Cabeza LDL | LayerNorm → Dense128 → GELU → Dropout0.30 → DenseK | TensorFlow/Metal, GPU Apple durante entrenamiento |
+| Cabeza LDL | LayerNorm, Dense128, GELU, Dropout0.30 y DenseK | TensorFlow/Metal, GPU Apple durante entrenamiento |
 | Evaluación de la cabeza | Obtener distribución, esperanza y categoría | CPU; evita competir con DINOv2 por Metal |
 
 La primera vista conserva toda la grupa. La segunda usa por defecto el 65% superior del recorte preparado (`[0,0,1,0.65]`). Es una aproximación geométrica revisable, no un detector de huesos. El modo manual exige ROIs por imagen; el modo `full` desactiva la segunda rama para estudiar su aporte.
@@ -96,7 +96,7 @@ caffeinate -i bash ejecutar_mac.sh \
 
 Opcionalmente añadir como tercer argumento un CSV privado del notebook previo con `clave,real,estado,caja_predicha`, para reconstruir sus recortes exactos. Las cajas anotadas del dataset son etiquetas, no sustituyen el `best.pt` entrenado.
 
-Orden: comprobar GPU → ETL/EDA → características train/val → entrenar LDL → evaluar con cajas anotadas → entrenar YOLO si hace falta → recortes predichos → evaluación end-to-end → mapas → comparaciones opcionales.
+Orden: comprobar GPU, ETL/EDA, características train/val, entrenar LDL, evaluar con cajas anotadas, entrenar YOLO si hace falta, recortes predichos, evaluación end-to-end, mapas y comparaciones opcionales.
 
 Cada ejecución crea un directorio nuevo en `runs/` y un puntero local `ULTIMA_EJECUCION.txt`. Las salidas son privadas y están ignoradas por Git. No se evalúa test en el ejecutor; EDA describe las particiones existentes. No mover datos/carpeta de trabajo tras ETL, porque el manifiesto conserva rutas absolutas.
 
@@ -119,7 +119,7 @@ cat "$RUN/val_gt/resumen.md"
 cat "$RUN/val_pipeline/resumen.md"
 ```
 
-`metricas.json → continuous_bcs` contiene las métricas continuas; el nivel superior contiene métricas por categoría. Se informa cobertura, abstenciones, MAE/RMSE entre clasificadas, tolerancias±0.25/±0.50 sobre clasificadas y sobre todas las elegibles, F1/kappa por categoría y mediana constante de train como baseline. En métricas globales las abstenciones cuentan como no aciertos. Las proporciones se multiplican por100 para porcentajes.
+La clave `continuous_bcs` de `metricas.json` contiene las métricas continuas; el nivel superior contiene métricas por categoría. Se informa cobertura, abstenciones, MAE/RMSE entre clasificadas, tolerancias±0.25/±0.50 sobre clasificadas y sobre todas las elegibles, F1/kappa por categoría y mediana constante de train como baseline. En métricas globales las abstenciones cuentan como no aciertos. Las proporciones se multiplican por100 para porcentajes.
 
 Las comparaciones pareadas usan categorías en ambos modelos. No comparar MAE continuo de uno con MAE redondeado del otro como si fueran el mismo criterio. La coincidencia de estados no demuestra coincidencia de píxeles; conservar detector y coordenadas para aislar el clasificador. Con detector nuevo, informar ese cambio junto a la comparación end-to-end y revisar por separado las cajas anotadas.
 
