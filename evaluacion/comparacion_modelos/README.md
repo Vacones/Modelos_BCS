@@ -4,7 +4,7 @@ Esta carpeta reunirá la comparación de los candidatos desarrollados en `modelo
 
 ## Estado
 
-Todavía no existe una comparación maestra aprobada ni se ha seleccionado un modelo para uso operativo. Los informes actuales utilizan distintas unidades de análisis, fuentes de cajas y conjuntos de evaluación. Sus cifras no deben ordenarse en una sola clasificación sin comprobar primero que fueron obtenidas bajo condiciones comparables.
+Esta carpeta conserva el corte preliminar con las validaciones originales de cada modelo, que usaban distintas unidades de análisis, fuentes de cajas y conjuntos de evaluación. La comparación final, con los seis enfoques reentrenados sobre las mismas 66 vacas y los mismos pliegues, está en [`evaluacion/comparacion_validacion_cruzada`](../comparacion_validacion_cruzada/). Con esa comparación aprobamos el modelo de [`modelos/Modelo final DINOv2 ridge BCS`](../../modelos/Modelo%20final%20DINOv2%20ridge%20BCS/) para el prototipo.
 
 ## Candidatos
 

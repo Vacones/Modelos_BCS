@@ -100,3 +100,9 @@ salida*/
 !modelos/Modelo final DINOv2 ridge BCS/resultados/*.json
 !modelos/Modelo final DINOv2 ridge BCS/resultados/*.md
 !modelos/Modelo final DINOv2 ridge BCS/resultados/fig_*.png
+
+# Comparación con validación cruzada por vaca: solo resultados agregados y figuras
+!evaluacion/comparacion_validacion_cruzada/resultados/
+!evaluacion/comparacion_validacion_cruzada/resultados/*.csv
+!evaluacion/comparacion_validacion_cruzada/resultados/*.json
+!evaluacion/comparacion_validacion_cruzada/resultados/fig_*.png

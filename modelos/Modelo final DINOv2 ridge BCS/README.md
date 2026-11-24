@@ -107,7 +107,7 @@ El alfa de 100 lo fijamos después de ver la validación cruzada, por eso el 0.1
 
 El detector tiene un mAP50 de 0.995 en valid y en test, y un mAP50-95 de 0.81 en valid y 0.79 en test. En las 331 fotos encontró la grupa dentro de la vaca en todas.
 
-La carpeta [`resultados/`](resultados/) tiene los resultados agregados de cada comparación y las figuras. No incluye identificadores de vacas ni nombres de fotos.
+La carpeta [`resultados/`](resultados/) tiene los resultados agregados de cada comparación y las figuras. No incluye identificadores de vacas ni nombres de fotos. La comparación con todos los modelos del equipo, con las mismas vacas y los mismos pliegues, está en [`evaluacion/comparacion_validacion_cruzada`](../../evaluacion/comparacion_validacion_cruzada/).
 
 ## Contenido de la carpeta
 
